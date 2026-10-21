@@ -1,0 +1,41 @@
+original_id,original_label,mapped_class,pixels,images_present
+0,unmapped,Ignored,542361812,1498
+1,seagrass,Background,24207320,27
+2,trash,Background,1466031,35
+3,other coral dead,Dead,6610701,138
+4,other coral bleached,Bleached,7921061,142
+5,sand,Background,196821540,907
+6,other coral alive,Healthy,120299444,851
+7,human,Background,35365250,120
+8,transect tools,Background,2267325,169
+9,fish,Background,14915057,1218
+10,algae covered substrate,Background,162284174,676
+11,other animal,Background,1099700,107
+12,unknown hard substrate,Background,378884014,1375
+13,background,Background,687757093,1346
+14,dark,Background,159368750,1390
+15,transect line,Background,8351655,723
+16,massive/meandering bleached,Bleached,2912563,62
+17,massive/meandering alive,Healthy,286269163,1192
+18,rubble,Background,137988434,776
+19,branching bleached,Bleached,14150345,203
+20,branching dead,Dead,31160310,669
+21,millepora,Ignored,9932734,97
+22,branching alive,Healthy,17008615,724
+23,massive/meandering dead,Dead,26186688,569
+24,clam,Background,872458,48
+25,acropora alive,Healthy,50272699,478
+26,sea cucumber,Background,1070283,78
+27,turbinaria,Ignored,3664753,37
+28,table acropora alive,Healthy,107051403,300
+29,sponge,Background,5819691,222
+30,anemone,Background,2228048,36
+31,pocillopora alive,Healthy,56022067,508
+32,table acropora dead,Dead,26850814,177
+33,meandering bleached,Bleached,1297052,18
+34,stylophora alive,Healthy,6979042,295
+35,sea urchin,Background,930474,74
+36,meandering alive,Healthy,30243169,492
+37,meandering dead,Dead,9707860,140
+38,crown of thorn,Background,2124955,49
+39,dead clam,Background,655037,44

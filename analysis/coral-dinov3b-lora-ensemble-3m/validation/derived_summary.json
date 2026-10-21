@@ -1,0 +1,117 @@
+{
+  "checkpoint_epoch": 4,
+  "validation_images": 166,
+  "images_with_dead": 132,
+  "images_with_dead_and_zero_recall": 24,
+  "mean_per_image_recall": 0.3836178784894001,
+  "median_per_image_recall": 0.30726428759164326,
+  "training_validation_site_overlap": [],
+  "categories": [
+    {
+      "original_id": 3,
+      "original_label": "other coral dead",
+      "dead_pixels": 1751969,
+      "images_present": 39,
+      "dead_correct": 125236,
+      "dead_recall": 0.07148299998458876,
+      "predicted_Background_pixels": 1587134,
+      "predicted_Healthy_pixels": 36453,
+      "predicted_Bleached_pixels": 3146,
+      "predicted_Dead_pixels": 125236,
+      "training_images": 138,
+      "training_original_pixels": 6610701,
+      "share_of_training_dead_pixels": 0.06576740487840722,
+      "share_of_validation_dead_pixels": 0.2706893275136158
+    },
+    {
+      "original_id": 20,
+      "original_label": "branching dead",
+      "dead_pixels": 2598526,
+      "images_present": 92,
+      "dead_correct": 1700572,
+      "dead_recall": 0.6544371693798715,
+      "predicted_Background_pixels": 461082,
+      "predicted_Healthy_pixels": 425105,
+      "predicted_Bleached_pixels": 11767,
+      "predicted_Dead_pixels": 1700572,
+      "training_images": 669,
+      "training_original_pixels": 31160310,
+      "share_of_training_dead_pixels": 0.3100023316599376,
+      "share_of_validation_dead_pixels": 0.40148727258681294
+    },
+    {
+      "original_id": 23,
+      "original_label": "massive/meandering dead",
+      "dead_pixels": 1155693,
+      "images_present": 72,
+      "dead_correct": 304348,
+      "dead_recall": 0.26334675385245043,
+      "predicted_Background_pixels": 589206,
+      "predicted_Healthy_pixels": 193815,
+      "predicted_Bleached_pixels": 68324,
+      "predicted_Dead_pixels": 304348,
+      "training_images": 569,
+      "training_original_pixels": 26186688,
+      "share_of_training_dead_pixels": 0.26052161671213503,
+      "share_of_validation_dead_pixels": 0.17856124222642822
+    },
+    {
+      "original_id": 32,
+      "original_label": "table acropora dead",
+      "dead_pixels": 723301,
+      "images_present": 18,
+      "dead_correct": 671597,
+      "dead_recall": 0.9285166203281898,
+      "predicted_Background_pixels": 37922,
+      "predicted_Healthy_pixels": 12524,
+      "predicted_Bleached_pixels": 1258,
+      "predicted_Dead_pixels": 671597,
+      "training_images": 177,
+      "training_original_pixels": 26850814,
+      "share_of_training_dead_pixels": 0.2671287592121932,
+      "share_of_validation_dead_pixels": 0.11175418131252655
+    },
+    {
+      "original_id": 37,
+      "original_label": "meandering dead",
+      "dead_pixels": 242761,
+      "images_present": 22,
+      "dead_correct": 78871,
+      "dead_recall": 0.3248915600116987,
+      "predicted_Background_pixels": 129128,
+      "predicted_Healthy_pixels": 33994,
+      "predicted_Bleached_pixels": 768,
+      "predicted_Dead_pixels": 78871,
+      "training_images": 140,
+      "training_original_pixels": 9707860,
+      "share_of_training_dead_pixels": 0.09657988753732688,
+      "share_of_validation_dead_pixels": 0.03750797636061648
+    }
+  ],
+  "sites": [
+    {
+      "site": "site29",
+      "training_images": 0,
+      "validation_images": 2,
+      "dead_pixels": 8772,
+      "dead_correct": 0,
+      "dead_recall": 0.0
+    },
+    {
+      "site": "site30",
+      "training_images": 0,
+      "validation_images": 133,
+      "dead_pixels": 2382830,
+      "dead_correct": 1353191,
+      "dead_recall": 0.5678923800690775
+    },
+    {
+      "site": "site6",
+      "training_images": 0,
+      "validation_images": 31,
+      "dead_pixels": 4080648,
+      "dead_correct": 1527433,
+      "dead_recall": 0.3743113838782468
+    }
+  ]
+}

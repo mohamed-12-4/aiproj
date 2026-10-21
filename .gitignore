@@ -1,0 +1,13 @@
+.venv/
+.cache/
+__pycache__/
+data/
+checkpoints/
+predictions/
+previews/
+*.log
+.agents/
+.aws/
+.codex/
+.venv/
+

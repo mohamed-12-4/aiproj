@@ -1,0 +1,115 @@
+{
+  "images": 1517,
+  "training_size_hw": [
+    512,
+    1024
+  ],
+  "coverage_definition": "images containing at least one pixel of a class",
+  "counts_are_before_augmentation_and_oversampling": true,
+  "original": {
+    "valid_pixels": 2625420285,
+    "ignored_pixels": 555959299,
+    "classes": [
+      {
+        "resolution": "original",
+        "class": "Background",
+        "pixels": 1824477289,
+        "pixel_share_valid": 0.6949277033562647,
+        "images_present": 1514,
+        "image_coverage": 0.998022412656559,
+        "images_at_least_1pct_valid": 1513,
+        "images_at_least_5pct_valid": 1512
+      },
+      {
+        "resolution": "original",
+        "class": "Healthy",
+        "pixels": 674145602,
+        "pixel_share_valid": 0.25677626011029314,
+        "images_present": 1383,
+        "image_coverage": 0.9116677653263019,
+        "images_at_least_1pct_valid": 1322,
+        "images_at_least_5pct_valid": 1193
+      },
+      {
+        "resolution": "original",
+        "class": "Bleached",
+        "pixels": 26281021,
+        "pixel_share_valid": 0.010010214802617783,
+        "images_present": 322,
+        "image_coverage": 0.2122610415293342,
+        "images_at_least_1pct_valid": 174,
+        "images_at_least_5pct_valid": 83
+      },
+      {
+        "resolution": "original",
+        "class": "Dead",
+        "pixels": 100516373,
+        "pixel_share_valid": 0.03828582173082433,
+        "images_present": 1044,
+        "image_coverage": 0.6882003955174687,
+        "images_at_least_1pct_valid": 780,
+        "images_at_least_5pct_valid": 351
+      }
+    ]
+  },
+  "training": {
+    "valid_pixels": 656338485,
+    "ignored_pixels": 139006411,
+    "classes": [
+      {
+        "resolution": "training",
+        "class": "Background",
+        "pixels": 456035971,
+        "pixel_share_valid": 0.6948182704843219,
+        "images_present": 1514,
+        "image_coverage": 0.998022412656559,
+        "images_at_least_1pct_valid": 1513,
+        "images_at_least_5pct_valid": 1512
+      },
+      {
+        "resolution": "training",
+        "class": "Healthy",
+        "pixels": 168589691,
+        "pixel_share_valid": 0.25686394269566565,
+        "images_present": 1383,
+        "image_coverage": 0.9116677653263019,
+        "images_at_least_1pct_valid": 1322,
+        "images_at_least_5pct_valid": 1193
+      },
+      {
+        "resolution": "training",
+        "class": "Bleached",
+        "pixels": 6571826,
+        "pixel_share_valid": 0.010012860970662112,
+        "images_present": 322,
+        "image_coverage": 0.2122610415293342,
+        "images_at_least_1pct_valid": 174,
+        "images_at_least_5pct_valid": 83
+      },
+      {
+        "resolution": "training",
+        "class": "Dead",
+        "pixels": 25140997,
+        "pixel_share_valid": 0.038304925849350434,
+        "images_present": 1044,
+        "image_coverage": 0.6882003955174687,
+        "images_at_least_1pct_valid": 780,
+        "images_at_least_5pct_valid": 351
+      }
+    ]
+  },
+  "sampler": {
+    "settings": {
+      "enabled": true,
+      "dead_min_fraction": 0.05,
+      "dead_image_weight": 3.0
+    },
+    "expected_unique_images_per_epoch": 883.440694936007,
+    "expected_pixel_shares_before_augmentation": {
+      "Background": 0.6587672476997708,
+      "Healthy": 0.26176022332997767,
+      "Bleached": 0.011645563065371676,
+      "Dead": 0.0678269659048799
+    }
+  }
+}

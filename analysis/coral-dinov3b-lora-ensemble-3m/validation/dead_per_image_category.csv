@@ -1,0 +1,244 @@
+index,image,mask,original_id,original_label,pixels,correct,recall
+0,site29_000001_010000_leftImg8bit.png,site29_000001_010000_gtFine.png,23,massive/meandering dead,8772,0,0.0
+5,site30_000004_000353_leftImg8bit.png,site30_000004_000353_gtFine.png,20,branching dead,14149,10320,0.7293801682097675
+5,site30_000004_000353_leftImg8bit.png,site30_000004_000353_gtFine.png,37,meandering dead,698,0,0.0
+9,site30_000008_015294_leftImg8bit.png,site30_000008_015294_gtFine.png,23,massive/meandering dead,2888,1414,0.48961218836565096
+12,site30_000011_003232_leftImg8bit.png,site30_000011_003232_gtFine.png,20,branching dead,1522,347,0.22798948751642575
+16,site30_000015_017936_leftImg8bit.png,site30_000015_017936_gtFine.png,20,branching dead,1367,0,0.0
+16,site30_000015_017936_leftImg8bit.png,site30_000015_017936_gtFine.png,23,massive/meandering dead,5568,0,0.0
+17,site30_000016_020895_leftImg8bit.png,site30_000016_020895_gtFine.png,20,branching dead,425,0,0.0
+18,site30_000017_021477_leftImg8bit.png,site30_000017_021477_gtFine.png,23,massive/meandering dead,595,0,0.0
+21,site30_000020_019793_leftImg8bit.png,site30_000020_019793_gtFine.png,20,branching dead,8696,8236,0.9471021159153634
+21,site30_000020_019793_leftImg8bit.png,site30_000020_019793_gtFine.png,23,massive/meandering dead,552,0,0.0
+22,site30_000021_020394_leftImg8bit.png,site30_000021_020394_gtFine.png,32,table acropora dead,1609,0,0.0
+24,site30_000023_021459_leftImg8bit.png,site30_000023_021459_gtFine.png,3,other coral dead,24416,11364,0.46543250327653996
+25,site30_000024_001782_leftImg8bit.png,site30_000024_001782_gtFine.png,20,branching dead,22175,7290,0.3287485907553551
+25,site30_000024_001782_leftImg8bit.png,site30_000024_001782_gtFine.png,23,massive/meandering dead,4064,0,0.0
+27,site30_000026_014018_leftImg8bit.png,site30_000026_014018_gtFine.png,20,branching dead,1349,0,0.0
+28,site30_000027_016741_leftImg8bit.png,site30_000027_016741_gtFine.png,20,branching dead,28965,22566,0.7790781978249611
+29,site30_000028_017770_leftImg8bit.png,site30_000028_017770_gtFine.png,20,branching dead,24235,5603,0.2311945533319579
+30,site30_000029_006863_leftImg8bit.png,site30_000029_006863_gtFine.png,3,other coral dead,44948,11455,0.25485004894544805
+30,site30_000029_006863_leftImg8bit.png,site30_000029_006863_gtFine.png,20,branching dead,26017,4111,0.1580120690317869
+31,site30_000030_006990_leftImg8bit.png,site30_000030_006990_gtFine.png,20,branching dead,72260,65892,0.911873789094935
+32,site30_000031_008064_leftImg8bit.png,site30_000031_008064_gtFine.png,20,branching dead,9777,2732,0.2794313184003273
+33,site30_000032_009004_leftImg8bit.png,site30_000032_009004_gtFine.png,20,branching dead,24199,14991,0.6194884086119261
+34,site30_000033_009670_leftImg8bit.png,site30_000033_009670_gtFine.png,20,branching dead,5069,225,0.04438745314657724
+35,site30_000034_010786_leftImg8bit.png,site30_000034_010786_gtFine.png,20,branching dead,8557,8300,0.9699661096178567
+35,site30_000034_010786_leftImg8bit.png,site30_000034_010786_gtFine.png,32,table acropora dead,49520,48782,0.985096930533118
+36,site30_000035_011690_leftImg8bit.png,site30_000035_011690_gtFine.png,20,branching dead,3465,1929,0.5567099567099567
+38,site30_000037_000882_leftImg8bit.png,site30_000037_000882_gtFine.png,20,branching dead,48343,20786,0.4299691785780775
+38,site30_000037_000882_leftImg8bit.png,site30_000037_000882_gtFine.png,32,table acropora dead,9070,0,0.0
+39,site30_000038_002130_leftImg8bit.png,site30_000038_002130_gtFine.png,20,branching dead,25227,4710,0.18670472113212036
+43,site30_000042_002628_leftImg8bit.png,site30_000042_002628_gtFine.png,20,branching dead,2956,163,0.05514208389715832
+47,site30_000046_019707_leftImg8bit.png,site30_000046_019707_gtFine.png,23,massive/meandering dead,1293,546,0.4222737819025522
+48,site30_000047_021091_leftImg8bit.png,site30_000047_021091_gtFine.png,3,other coral dead,8368,0,0.0
+48,site30_000047_021091_leftImg8bit.png,site30_000047_021091_gtFine.png,20,branching dead,2706,191,0.07058388765705839
+48,site30_000047_021091_leftImg8bit.png,site30_000047_021091_gtFine.png,23,massive/meandering dead,378,0,0.0
+49,site30_000048_024899_leftImg8bit.png,site30_000048_024899_gtFine.png,23,massive/meandering dead,1881,0,0.0
+52,site30_000051_018149_leftImg8bit.png,site30_000051_018149_gtFine.png,23,massive/meandering dead,8812,6008,0.6817975487970949
+53,site30_000052_002016_leftImg8bit.png,site30_000052_002016_gtFine.png,20,branching dead,3876,3622,0.9344685242518059
+54,site30_000053_006120_leftImg8bit.png,site30_000053_006120_gtFine.png,20,branching dead,4045,188,0.04647713226205192
+54,site30_000053_006120_leftImg8bit.png,site30_000053_006120_gtFine.png,32,table acropora dead,8605,0,0.0
+55,site30_000054_007273_leftImg8bit.png,site30_000054_007273_gtFine.png,32,table acropora dead,52708,52628,0.9984822038400243
+56,site30_000055_007557_leftImg8bit.png,site30_000055_007557_gtFine.png,3,other coral dead,3303,0,0.0
+56,site30_000055_007557_leftImg8bit.png,site30_000055_007557_gtFine.png,20,branching dead,23690,12775,0.5392570704938793
+56,site30_000055_007557_leftImg8bit.png,site30_000055_007557_gtFine.png,37,meandering dead,601,0,0.0
+57,site30_000056_007728_leftImg8bit.png,site30_000056_007728_gtFine.png,20,branching dead,12190,10546,0.865135356849877
+57,site30_000056_007728_leftImg8bit.png,site30_000056_007728_gtFine.png,32,table acropora dead,7038,5246,0.7453822108553566
+58,site30_000057_009937_leftImg8bit.png,site30_000057_009937_gtFine.png,3,other coral dead,2878,0,0.0
+58,site30_000057_009937_leftImg8bit.png,site30_000057_009937_gtFine.png,20,branching dead,47576,3146,0.06612577770304355
+58,site30_000057_009937_leftImg8bit.png,site30_000057_009937_gtFine.png,32,table acropora dead,25847,25618,0.9911401710063064
+59,site30_000058_012837_leftImg8bit.png,site30_000058_012837_gtFine.png,20,branching dead,12228,9595,0.7846745175008178
+60,site30_000059_017147_leftImg8bit.png,site30_000059_017147_gtFine.png,20,branching dead,14610,2397,0.16406570841889118
+61,site30_000060_019424_leftImg8bit.png,site30_000060_019424_gtFine.png,20,branching dead,4860,3769,0.775514403292181
+61,site30_000060_019424_leftImg8bit.png,site30_000060_019424_gtFine.png,23,massive/meandering dead,8551,0,0.0
+61,site30_000060_019424_leftImg8bit.png,site30_000060_019424_gtFine.png,37,meandering dead,1851,0,0.0
+62,site30_000061_000269_leftImg8bit.png,site30_000061_000269_gtFine.png,20,branching dead,1098,142,0.12932604735883424
+62,site30_000061_000269_leftImg8bit.png,site30_000061_000269_gtFine.png,32,table acropora dead,17310,17059,0.9854997111496245
+65,site30_000064_022072_leftImg8bit.png,site30_000064_022072_gtFine.png,32,table acropora dead,27243,19878,0.7296553243034908
+66,site30_000065_003686_leftImg8bit.png,site30_000065_003686_gtFine.png,32,table acropora dead,98474,98069,0.9958872392712798
+67,site30_000066_004390_leftImg8bit.png,site30_000066_004390_gtFine.png,32,table acropora dead,14824,10809,0.7291554236373449
+68,site30_000067_006892_leftImg8bit.png,site30_000067_006892_gtFine.png,3,other coral dead,2679,0,0.0
+69,site30_000068_018004_leftImg8bit.png,site30_000068_018004_gtFine.png,3,other coral dead,208,0,0.0
+69,site30_000068_018004_leftImg8bit.png,site30_000068_018004_gtFine.png,23,massive/meandering dead,236,0,0.0
+69,site30_000068_018004_leftImg8bit.png,site30_000068_018004_gtFine.png,37,meandering dead,11758,152,0.012927368600102058
+70,site30_000069_018678_leftImg8bit.png,site30_000069_018678_gtFine.png,20,branching dead,4369,483,0.11055161364156557
+71,site30_000070_021471_leftImg8bit.png,site30_000070_021471_gtFine.png,3,other coral dead,225,0,0.0
+71,site30_000070_021471_leftImg8bit.png,site30_000070_021471_gtFine.png,23,massive/meandering dead,114,0,0.0
+72,site30_000071_021865_leftImg8bit.png,site30_000071_021865_gtFine.png,3,other coral dead,3152,0,0.0
+72,site30_000071_021865_leftImg8bit.png,site30_000071_021865_gtFine.png,37,meandering dead,3078,0,0.0
+73,site30_000072_000808_leftImg8bit.png,site30_000072_000808_gtFine.png,23,massive/meandering dead,365,0,0.0
+73,site30_000072_000808_leftImg8bit.png,site30_000072_000808_gtFine.png,32,table acropora dead,12749,10047,0.7880618087693152
+74,site30_000073_001051_leftImg8bit.png,site30_000073_001051_gtFine.png,23,massive/meandering dead,11758,9094,0.773430855587685
+74,site30_000073_001051_leftImg8bit.png,site30_000073_001051_gtFine.png,37,meandering dead,1551,0,0.0
+75,site30_000074_001643_leftImg8bit.png,site30_000074_001643_gtFine.png,32,table acropora dead,261741,257868,0.9852029296136257
+76,site30_000075_002198_leftImg8bit.png,site30_000075_002198_gtFine.png,37,meandering dead,3172,342,0.10781841109709962
+77,site30_000076_002748_leftImg8bit.png,site30_000076_002748_gtFine.png,23,massive/meandering dead,170,0,0.0
+78,site30_000077_004516_leftImg8bit.png,site30_000077_004516_gtFine.png,20,branching dead,3197,477,0.14920237722865187
+78,site30_000077_004516_leftImg8bit.png,site30_000077_004516_gtFine.png,37,meandering dead,20454,20401,0.99740881979075
+79,site30_000078_005835_leftImg8bit.png,site30_000078_005835_gtFine.png,37,meandering dead,244,0,0.0
+80,site30_000079_008962_leftImg8bit.png,site30_000079_008962_gtFine.png,23,massive/meandering dead,6764,0,0.0
+82,site30_000081_019793_leftImg8bit.png,site30_000081_019793_gtFine.png,3,other coral dead,1096,0,0.0
+82,site30_000081_019793_leftImg8bit.png,site30_000081_019793_gtFine.png,23,massive/meandering dead,21854,0,0.0
+83,site30_000082_020236_leftImg8bit.png,site30_000082_020236_gtFine.png,20,branching dead,9848,7850,0.7971161657189277
+83,site30_000082_020236_leftImg8bit.png,site30_000082_020236_gtFine.png,37,meandering dead,26224,0,0.0
+84,site30_000083_007730_leftImg8bit.png,site30_000083_007730_gtFine.png,20,branching dead,50430,43505,0.8626809438826095
+85,site30_000084_005327_leftImg8bit.png,site30_000084_005327_gtFine.png,20,branching dead,2085,1614,0.7741007194244605
+86,site30_000085_006756_leftImg8bit.png,site30_000085_006756_gtFine.png,20,branching dead,42691,4122,0.09655430887072217
+88,site30_000087_016933_leftImg8bit.png,site30_000087_016933_gtFine.png,20,branching dead,22132,11849,0.5353786372673053
+88,site30_000087_016933_leftImg8bit.png,site30_000087_016933_gtFine.png,23,massive/meandering dead,2049,0,0.0
+89,site30_000088_018497_leftImg8bit.png,site30_000088_018497_gtFine.png,20,branching dead,19648,15507,0.7892406351791531
+89,site30_000088_018497_leftImg8bit.png,site30_000088_018497_gtFine.png,23,massive/meandering dead,96036,414,0.004310883418717981
+90,site30_000089_019135_leftImg8bit.png,site30_000089_019135_gtFine.png,32,table acropora dead,41162,39405,0.9573149992711725
+91,site30_000090_020423_leftImg8bit.png,site30_000090_020423_gtFine.png,20,branching dead,7647,4218,0.5515888583758337
+92,site30_000091_004310_leftImg8bit.png,site30_000091_004310_gtFine.png,20,branching dead,2078,574,0.2762271414821944
+92,site30_000091_004310_leftImg8bit.png,site30_000091_004310_gtFine.png,23,massive/meandering dead,1619,0,0.0
+93,site30_000092_015053_leftImg8bit.png,site30_000092_015053_gtFine.png,20,branching dead,2854,1964,0.6881569726699369
+93,site30_000092_015053_leftImg8bit.png,site30_000092_015053_gtFine.png,23,massive/meandering dead,2517,44,0.01748112832737386
+94,site30_000093_017201_leftImg8bit.png,site30_000093_017201_gtFine.png,23,massive/meandering dead,3271,0,0.0
+96,site30_000095_018596_leftImg8bit.png,site30_000095_018596_gtFine.png,20,branching dead,1448,0,0.0
+96,site30_000095_018596_leftImg8bit.png,site30_000095_018596_gtFine.png,23,massive/meandering dead,5802,2363,0.4072733540158566
+96,site30_000095_018596_leftImg8bit.png,site30_000095_018596_gtFine.png,37,meandering dead,19243,15629,0.8121914462401912
+97,site30_000096_001892_leftImg8bit.png,site30_000096_001892_gtFine.png,23,massive/meandering dead,41147,1428,0.034704838748875984
+98,site30_000097_010335_leftImg8bit.png,site30_000097_010335_gtFine.png,20,branching dead,2260,1980,0.8761061946902655
+98,site30_000097_010335_leftImg8bit.png,site30_000097_010335_gtFine.png,23,massive/meandering dead,3219,95,0.029512270891581236
+98,site30_000097_010335_leftImg8bit.png,site30_000097_010335_gtFine.png,37,meandering dead,10882,0,0.0
+99,site30_000098_010886_leftImg8bit.png,site30_000098_010886_gtFine.png,20,branching dead,1614,595,0.36864931846344484
+99,site30_000098_010886_leftImg8bit.png,site30_000098_010886_gtFine.png,23,massive/meandering dead,7178,3680,0.5126776260796879
+99,site30_000098_010886_leftImg8bit.png,site30_000098_010886_gtFine.png,37,meandering dead,60039,2930,0.04880161228534786
+100,site30_000099_011055_leftImg8bit.png,site30_000099_011055_gtFine.png,23,massive/meandering dead,881,82,0.09307604994324631
+101,site30_000100_011393_leftImg8bit.png,site30_000100_011393_gtFine.png,3,other coral dead,9686,7274,0.7509807970266363
+101,site30_000100_011393_leftImg8bit.png,site30_000100_011393_gtFine.png,20,branching dead,493,10,0.02028397565922921
+101,site30_000100_011393_leftImg8bit.png,site30_000100_011393_gtFine.png,23,massive/meandering dead,7426,0,0.0
+103,site30_000102_017633_leftImg8bit.png,site30_000102_017633_gtFine.png,23,massive/meandering dead,6035,1619,0.2682684341342171
+104,site30_000103_018251_leftImg8bit.png,site30_000103_018251_gtFine.png,23,massive/meandering dead,3325,3317,0.997593984962406
+105,site30_000104_018514_leftImg8bit.png,site30_000104_018514_gtFine.png,3,other coral dead,1477,419,0.28368314150304674
+105,site30_000104_018514_leftImg8bit.png,site30_000104_018514_gtFine.png,20,branching dead,1240,640,0.5161290322580645
+105,site30_000104_018514_leftImg8bit.png,site30_000104_018514_gtFine.png,23,massive/meandering dead,6511,209,0.032099523882660116
+106,site30_000105_020677_leftImg8bit.png,site30_000105_020677_gtFine.png,23,massive/meandering dead,2304,0,0.0
+106,site30_000105_020677_leftImg8bit.png,site30_000105_020677_gtFine.png,37,meandering dead,18519,13964,0.7540363950537285
+107,site30_000106_002245_leftImg8bit.png,site30_000106_002245_gtFine.png,23,massive/meandering dead,817,0,0.0
+108,site30_000107_002788_leftImg8bit.png,site30_000107_002788_gtFine.png,23,massive/meandering dead,18310,0,0.0
+109,site30_000108_004057_leftImg8bit.png,site30_000108_004057_gtFine.png,20,branching dead,4282,3681,0.8596450256889304
+109,site30_000108_004057_leftImg8bit.png,site30_000108_004057_gtFine.png,23,massive/meandering dead,958,822,0.8580375782881002
+109,site30_000108_004057_leftImg8bit.png,site30_000108_004057_gtFine.png,37,meandering dead,146,114,0.7808219178082192
+110,site30_000109_005196_leftImg8bit.png,site30_000109_005196_gtFine.png,23,massive/meandering dead,1338,0,0.0
+111,site30_000110_005912_leftImg8bit.png,site30_000110_005912_gtFine.png,20,branching dead,1583,0,0.0
+111,site30_000110_005912_leftImg8bit.png,site30_000110_005912_gtFine.png,23,massive/meandering dead,17109,672,0.03927757320708399
+112,site30_000111_006242_leftImg8bit.png,site30_000111_006242_gtFine.png,20,branching dead,5104,1704,0.3338557993730408
+112,site30_000111_006242_leftImg8bit.png,site30_000111_006242_gtFine.png,23,massive/meandering dead,60401,18273,0.3025281038393404
+113,site30_000112_006796_leftImg8bit.png,site30_000112_006796_gtFine.png,20,branching dead,3916,142,0.03626149131767109
+113,site30_000112_006796_leftImg8bit.png,site30_000112_006796_gtFine.png,23,massive/meandering dead,25036,3080,0.12302284710017575
+114,site30_000113_000902_leftImg8bit.png,site30_000113_000902_gtFine.png,20,branching dead,1599,0,0.0
+114,site30_000113_000902_leftImg8bit.png,site30_000113_000902_gtFine.png,23,massive/meandering dead,1660,0,0.0
+115,site30_000114_005157_leftImg8bit.png,site30_000114_005157_gtFine.png,37,meandering dead,15714,902,0.05740104365533919
+116,site30_000115_007841_leftImg8bit.png,site30_000115_007841_gtFine.png,20,branching dead,6558,4244,0.6471485208905154
+116,site30_000115_007841_leftImg8bit.png,site30_000115_007841_gtFine.png,23,massive/meandering dead,91,0,0.0
+117,site30_000116_012587_leftImg8bit.png,site30_000116_012587_gtFine.png,23,massive/meandering dead,308,0,0.0
+118,site30_000117_013420_leftImg8bit.png,site30_000117_013420_gtFine.png,20,branching dead,900,0,0.0
+118,site30_000117_013420_leftImg8bit.png,site30_000117_013420_gtFine.png,23,massive/meandering dead,20423,3305,0.16182735151544828
+119,site30_000118_000125_leftImg8bit.png,site30_000118_000125_gtFine.png,20,branching dead,842,0,0.0
+120,site30_000119_008248_leftImg8bit.png,site30_000119_008248_gtFine.png,20,branching dead,69673,66044,0.9479138260158168
+120,site30_000119_008248_leftImg8bit.png,site30_000119_008248_gtFine.png,23,massive/meandering dead,11075,1468,0.13255079006772008
+121,site30_000120_001341_leftImg8bit.png,site30_000120_001341_gtFine.png,20,branching dead,13924,3248,0.23326630278655558
+121,site30_000120_001341_leftImg8bit.png,site30_000120_001341_gtFine.png,23,massive/meandering dead,873,0,0.0
+122,site30_000121_006255_leftImg8bit.png,site30_000121_006255_gtFine.png,20,branching dead,33284,30732,0.9233265232544166
+122,site30_000121_006255_leftImg8bit.png,site30_000121_006255_gtFine.png,32,table acropora dead,8180,7298,0.8921760391198044
+123,site30_000122_007916_leftImg8bit.png,site30_000122_007916_gtFine.png,20,branching dead,60865,53951,0.8864043374681673
+124,site30_000123_008587_leftImg8bit.png,site30_000123_008587_gtFine.png,20,branching dead,36374,32552,0.8949249463902788
+125,site30_000124_009372_leftImg8bit.png,site30_000124_009372_gtFine.png,20,branching dead,10961,10029,0.914971261746191
+126,site30_000125_011857_leftImg8bit.png,site30_000125_011857_gtFine.png,20,branching dead,25552,11050,0.43245147150907953
+127,site30_000126_016137_leftImg8bit.png,site30_000126_016137_gtFine.png,20,branching dead,34108,21165,0.6205289081740354
+127,site30_000126_016137_leftImg8bit.png,site30_000126_016137_gtFine.png,23,massive/meandering dead,4195,0,0.0
+128,site30_000127_020513_leftImg8bit.png,site30_000127_020513_gtFine.png,20,branching dead,38654,26854,0.6947275831737983
+128,site30_000127_020513_leftImg8bit.png,site30_000127_020513_gtFine.png,32,table acropora dead,15929,15329,0.962332852030887
+129,site30_000128_000925_leftImg8bit.png,site30_000128_000925_gtFine.png,20,branching dead,22108,16474,0.7451601230323864
+129,site30_000128_000925_leftImg8bit.png,site30_000128_000925_gtFine.png,32,table acropora dead,3340,0,0.0
+133,site30_000132_010337_leftImg8bit.png,site30_000132_010337_gtFine.png,20,branching dead,1923,446,0.23192927717108686
+134,site30_000133_016956_leftImg8bit.png,site30_000133_016956_gtFine.png,23,massive/meandering dead,1238,0,0.0
+135,site6_000001_009800_leftImg8bit.png,site6_000001_009800_gtFine.png,3,other coral dead,17742,0,0.0
+135,site6_000001_009800_leftImg8bit.png,site6_000001_009800_gtFine.png,20,branching dead,44598,9714,0.21781245795775594
+135,site6_000001_009800_leftImg8bit.png,site6_000001_009800_gtFine.png,23,massive/meandering dead,26986,5308,0.19669458237604684
+136,site6_000002_001954_leftImg8bit.png,site6_000002_001954_gtFine.png,3,other coral dead,126434,7859,0.06215891295063037
+136,site6_000002_001954_leftImg8bit.png,site6_000002_001954_gtFine.png,20,branching dead,118904,101635,0.8547651887236762
+137,site6_000003_001377_leftImg8bit.png,site6_000003_001377_gtFine.png,3,other coral dead,394711,38537,0.0976334584037435
+138,site6_000004_000404_leftImg8bit.png,site6_000004_000404_gtFine.png,3,other coral dead,171156,375,0.002190983664025801
+138,site6_000004_000404_leftImg8bit.png,site6_000004_000404_gtFine.png,20,branching dead,100253,82831,0.8262196642494489
+138,site6_000004_000404_leftImg8bit.png,site6_000004_000404_gtFine.png,23,massive/meandering dead,7029,3349,0.4764546877222934
+138,site6_000004_000404_leftImg8bit.png,site6_000004_000404_gtFine.png,37,meandering dead,1169,0,0.0
+139,site6_000005_001663_leftImg8bit.png,site6_000005_001663_gtFine.png,3,other coral dead,41184,0,0.0
+139,site6_000005_001663_leftImg8bit.png,site6_000005_001663_gtFine.png,20,branching dead,116585,98377,0.8438221040442595
+139,site6_000005_001663_leftImg8bit.png,site6_000005_001663_gtFine.png,23,massive/meandering dead,2694,86,0.03192279138827023
+140,site6_000006_002922_leftImg8bit.png,site6_000006_002922_gtFine.png,3,other coral dead,14774,1238,0.08379585758765398
+140,site6_000006_002922_leftImg8bit.png,site6_000006_002922_gtFine.png,20,branching dead,43738,26002,0.5944944899172344
+140,site6_000006_002922_leftImg8bit.png,site6_000006_002922_gtFine.png,23,massive/meandering dead,5390,0,0.0
+141,site6_000007_003101_leftImg8bit.png,site6_000007_003101_gtFine.png,3,other coral dead,12000,0,0.0
+141,site6_000007_003101_leftImg8bit.png,site6_000007_003101_gtFine.png,20,branching dead,63983,37333,0.5834831127018114
+141,site6_000007_003101_leftImg8bit.png,site6_000007_003101_gtFine.png,23,massive/meandering dead,80315,17737,0.22084293095934757
+142,site6_000008_003371_leftImg8bit.png,site6_000008_003371_gtFine.png,3,other coral dead,31630,468,0.014796079671198229
+142,site6_000008_003371_leftImg8bit.png,site6_000008_003371_gtFine.png,20,branching dead,32661,26715,0.8179480113897308
+142,site6_000008_003371_leftImg8bit.png,site6_000008_003371_gtFine.png,23,massive/meandering dead,23324,176,0.007545875493054364
+142,site6_000008_003371_leftImg8bit.png,site6_000008_003371_gtFine.png,37,meandering dead,6961,2249,0.3230857635397213
+143,site6_000009_004180_leftImg8bit.png,site6_000009_004180_gtFine.png,3,other coral dead,66311,5560,0.0838473254814435
+143,site6_000009_004180_leftImg8bit.png,site6_000009_004180_gtFine.png,20,branching dead,18955,16699,0.8809812714323397
+143,site6_000009_004180_leftImg8bit.png,site6_000009_004180_gtFine.png,23,massive/meandering dead,82741,27006,0.32639199429545207
+143,site6_000009_004180_leftImg8bit.png,site6_000009_004180_gtFine.png,37,meandering dead,4346,25,0.005752416014726185
+144,site6_000010_007147_leftImg8bit.png,site6_000010_007147_gtFine.png,3,other coral dead,29410,0,0.0
+144,site6_000010_007147_leftImg8bit.png,site6_000010_007147_gtFine.png,20,branching dead,15524,3551,0.22874259211543416
+144,site6_000010_007147_leftImg8bit.png,site6_000010_007147_gtFine.png,23,massive/meandering dead,11233,0,0.0
+145,site6_000011_008946_leftImg8bit.png,site6_000011_008946_gtFine.png,3,other coral dead,57005,2966,0.05203052363827734
+145,site6_000011_008946_leftImg8bit.png,site6_000011_008946_gtFine.png,20,branching dead,24233,5054,0.20855857714686585
+145,site6_000011_008946_leftImg8bit.png,site6_000011_008946_gtFine.png,23,massive/meandering dead,23931,1943,0.08119175964230496
+146,site6_000012_009125_leftImg8bit.png,site6_000012_009125_gtFine.png,3,other coral dead,252745,0,0.0
+146,site6_000012_009125_leftImg8bit.png,site6_000012_009125_gtFine.png,20,branching dead,882,0,0.0
+146,site6_000012_009125_leftImg8bit.png,site6_000012_009125_gtFine.png,23,massive/meandering dead,1803,0,0.0
+147,site6_000013_011013_leftImg8bit.png,site6_000013_011013_gtFine.png,3,other coral dead,22450,0,0.0
+147,site6_000013_011013_leftImg8bit.png,site6_000013_011013_gtFine.png,20,branching dead,14164,7103,0.5014826320248518
+147,site6_000013_011013_leftImg8bit.png,site6_000013_011013_gtFine.png,23,massive/meandering dead,23477,13572,0.5780977126549389
+147,site6_000013_011013_leftImg8bit.png,site6_000013_011013_gtFine.png,32,table acropora dead,67952,63561,0.9353808570755827
+148,site6_000014_011193_leftImg8bit.png,site6_000014_011193_gtFine.png,3,other coral dead,64794,1339,0.02066549371855419
+148,site6_000014_011193_leftImg8bit.png,site6_000014_011193_gtFine.png,20,branching dead,145616,76302,0.5239946159762664
+148,site6_000014_011193_leftImg8bit.png,site6_000014_011193_gtFine.png,23,massive/meandering dead,3996,0,0.0
+149,site6_000015_011283_leftImg8bit.png,site6_000015_011283_gtFine.png,3,other coral dead,27453,29,0.0010563508541871563
+149,site6_000015_011283_leftImg8bit.png,site6_000015_011283_gtFine.png,20,branching dead,119822,100238,0.8365575603812322
+150,site6_000016_011553_leftImg8bit.png,site6_000016_011553_gtFine.png,3,other coral dead,56244,8263,0.14691344854562263
+150,site6_000016_011553_leftImg8bit.png,site6_000016_011553_gtFine.png,20,branching dead,29148,7459,0.255900919445588
+150,site6_000016_011553_leftImg8bit.png,site6_000016_011553_gtFine.png,23,massive/meandering dead,62542,1619,0.025886604201976273
+151,site6_000017_013711_leftImg8bit.png,site6_000017_013711_gtFine.png,3,other coral dead,39252,27690,0.7054417609293794
+151,site6_000017_013711_leftImg8bit.png,site6_000017_013711_gtFine.png,20,branching dead,21170,13558,0.640434577231932
+151,site6_000017_013711_leftImg8bit.png,site6_000017_013711_gtFine.png,23,massive/meandering dead,128592,118670,0.9228412342914023
+152,site6_000018_014340_leftImg8bit.png,site6_000018_014340_gtFine.png,3,other coral dead,5605,0,0.0
+152,site6_000018_014340_leftImg8bit.png,site6_000018_014340_gtFine.png,20,branching dead,10801,766,0.0709193593185816
+152,site6_000018_014340_leftImg8bit.png,site6_000018_014340_gtFine.png,23,massive/meandering dead,2589,0,0.0
+153,site6_000019_014610_leftImg8bit.png,site6_000019_014610_gtFine.png,3,other coral dead,48373,74,0.0015297790089512744
+153,site6_000019_014610_leftImg8bit.png,site6_000019_014610_gtFine.png,20,branching dead,72676,45665,0.6283367273928119
+153,site6_000019_014610_leftImg8bit.png,site6_000019_014610_gtFine.png,23,massive/meandering dead,3850,0,0.0
+154,site6_000020_015689_leftImg8bit.png,site6_000020_015689_gtFine.png,3,other coral dead,414,0,0.0
+154,site6_000020_015689_leftImg8bit.png,site6_000020_015689_gtFine.png,20,branching dead,1516,0,0.0
+154,site6_000020_015689_leftImg8bit.png,site6_000020_015689_gtFine.png,23,massive/meandering dead,42837,12392,0.28928262950253286
+155,site6_000021_016048_leftImg8bit.png,site6_000021_016048_gtFine.png,3,other coral dead,46361,4,8.627941588835444e-05
+155,site6_000021_016048_leftImg8bit.png,site6_000021_016048_gtFine.png,20,branching dead,51635,49657,0.9616926503340757
+155,site6_000021_016048_leftImg8bit.png,site6_000021_016048_gtFine.png,23,massive/meandering dead,51634,14209,0.2751868923577488
+156,site6_000022_017307_leftImg8bit.png,site6_000022_017307_gtFine.png,3,other coral dead,11938,226,0.018931144245267213
+156,site6_000022_017307_leftImg8bit.png,site6_000022_017307_gtFine.png,20,branching dead,71784,30625,0.4266271035328207
+156,site6_000022_017307_leftImg8bit.png,site6_000022_017307_gtFine.png,23,massive/meandering dead,24397,12728,0.521703488133787
+156,site6_000022_017307_leftImg8bit.png,site6_000022_017307_gtFine.png,37,meandering dead,19779,13003,0.6574144294453713
+157,site6_000023_019555_leftImg8bit.png,site6_000023_019555_gtFine.png,20,branching dead,109028,87183,0.7996386249403823
+158,site6_000024_019735_leftImg8bit.png,site6_000024_019735_gtFine.png,3,other coral dead,35612,0,0.0
+158,site6_000024_019735_leftImg8bit.png,site6_000024_019735_gtFine.png,20,branching dead,88535,84543,0.9549104873778732
+158,site6_000024_019735_leftImg8bit.png,site6_000024_019735_gtFine.png,23,massive/meandering dead,3748,0,0.0
+158,site6_000024_019735_leftImg8bit.png,site6_000024_019735_gtFine.png,37,meandering dead,2595,0,0.0
+159,site6_000025_020184_leftImg8bit.png,site6_000025_020184_gtFine.png,3,other coral dead,41817,0,0.0
+159,site6_000025_020184_leftImg8bit.png,site6_000025_020184_gtFine.png,23,massive/meandering dead,48035,17210,0.3582804205266993
+160,site6_000026_020454_leftImg8bit.png,site6_000026_020454_gtFine.png,3,other coral dead,967,0,0.0
+161,site6_000027_004414_leftImg8bit.png,site6_000027_004414_gtFine.png,3,other coral dead,20850,18,0.0008633093525179857
+161,site6_000027_004414_leftImg8bit.png,site6_000027_004414_gtFine.png,20,branching dead,126550,53182,0.4202449624654287
+161,site6_000027_004414_leftImg8bit.png,site6_000027_004414_gtFine.png,23,massive/meandering dead,14980,187,0.012483311081441923
+161,site6_000027_004414_leftImg8bit.png,site6_000027_004414_gtFine.png,37,meandering dead,13737,9160,0.666812258862925
+162,site6_000028_010004_leftImg8bit.png,site6_000028_010004_gtFine.png,20,branching dead,14245,12960,0.9097929097929098
+163,site6_000029_017119_leftImg8bit.png,site6_000029_017119_gtFine.png,20,branching dead,1107,0,0.0
+163,site6_000029_017119_leftImg8bit.png,site6_000029_017119_gtFine.png,23,massive/meandering dead,38148,223,0.005845653769529202
+164,site6_000030_018359_leftImg8bit.png,site6_000030_018359_gtFine.png,20,branching dead,7031,5697,0.8102688095576731
+165,site6_000031_000440_leftImg8bit.png,site6_000031_000440_gtFine.png,3,other coral dead,12301,78,0.006340947890415414
+165,site6_000031_000440_leftImg8bit.png,site6_000031_000440_gtFine.png,20,branching dead,131506,115447,0.8778838988335133
+165,site6_000031_000440_leftImg8bit.png,site6_000031_000440_gtFine.png,23,massive/meandering dead,3655,0,0.0
