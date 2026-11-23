@@ -1,10 +1,12 @@
-"""DINOv3 LoRA-Ensemble for coral-health segmentation (legacy checkpoints supported)."""
+"""DINOv3 coral-health segmentation (single DPT and legacy checkpoints supported)."""
 
 import argparse
 import io
 import json
 import math
 import os
+import re
+import time
 from pathlib import Path
 
 import config
@@ -26,37 +28,38 @@ from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
 from tqdm.auto import tqdm
 from transformers import AutoModel
 from ensemble import CoralEnsemble
+from dpt import CoralDINO
+from coral_data import (CLASSES, CORAL_IDS, IGNORE, LABEL_MAP,
+                        data_directory, dataset_config)
 
 MODEL_ID = config.MODEL["id"]
 OUTPUT = ROOT / "checkpoints" / config.RUN_NAME
-CLASSES = ["Background", "Healthy", "Bleached", "Dead"]
-CORAL_IDS = {
-    1: [6, 17, 22, 25, 28, 31, 34, 36],  # Explicitly labeled alive.
-    2: [4, 16, 19, 33],
-    3: [3, 20, 23, 32, 37],
-}
-IGNORE = 255
-# 0 is unlabeled; millepora (21) and turbinaria (27) have no health label.
-LABEL_MAP = np.full(256, IGNORE, dtype=np.uint8)
-LABEL_MAP[1:40] = 0
-LABEL_MAP[[21, 27]] = IGNORE
-for target, source_ids in CORAL_IDS.items():
-    LABEL_MAP[source_ids] = target
 
 
-def download_data():
-    return Path(snapshot_download(
-        "EPFL-ECEO/coralscapes", repo_type="dataset",
-        local_dir=ROOT / "data/coralscapes",
+def download_data(settings=None):
+    settings = dataset_config(config.DATASET["annotation_version"]) if settings is None else settings
+    directory = Path(snapshot_download(
+        settings["id"], repo_type="dataset", revision=settings["revision"],
+        local_dir=data_directory(ROOT, settings),
         allow_patterns=["data/*.parquet", "*.json", "README.md"], max_workers=4,
     ))
+    names = json.loads((directory / "id2label.json").read_text())
+    if names != settings["source_labels"]:
+        raise ValueError("Dataset label metadata differs from the verified annotation policy.")
+    sizes = {split: sum(pq.read_metadata(shard).num_rows for shard in
+                       (directory / "data").glob(f"{split}-*.parquet"))
+             for split in ("train", "validation", "test")}
+    if sizes != settings["expected_split_sizes"]:
+        raise ValueError(f"Dataset split sizes differ from the verified release: {sizes}")
+    return directory
 
 
-def load_data(directory, height=None, prepare=True):
+def load_data(directory, height=None, prepare=True, settings=None,
+              splits=("train", "validation", "test"), quiet=False):
     """Cache small PNGs once, without loading the entire dataset into RAM."""
     height = config.TRAIN["height"] if height is None else height
     result = {}
-    for split in ("train", "validation", "test"):
+    for split in splits:
         output = directory / f"resized_{height}" / split
         output.mkdir(parents=True, exist_ok=True)
         shards = sorted((directory / "data").glob(f"{split}-*.parquet"))
@@ -69,7 +72,7 @@ def load_data(directory, height=None, prepare=True):
             if not prepare:
                 raise ValueError(f"Missing prepared {split} cache at {output}; run CPU preparation first.")
             index = 0
-            with tqdm(total=total, desc=f"Preparing {split}") as progress:
+            with tqdm(total=total, desc=f"Preparing {split}", disable=quiet) as progress:
                 for shard in shards:
                     for batch in pq.ParquetFile(shard).iter_batches(batch_size=1, use_threads=False):
                         sample = batch.to_pylist()[0]
@@ -77,6 +80,10 @@ def load_data(directory, height=None, prepare=True):
                             if path.exists():
                                 continue
                             with Image.open(io.BytesIO(sample[key]["bytes"])) as image:
+                                if key == "label" and settings is not None:
+                                    ids = np.asarray(image)
+                                    if ids.ndim != 2 or ids.max(initial=0) > settings["num_source_classes"]:
+                                        raise ValueError("Unexpected source label IDs in annotation mask.")
                                 method = Image.Resampling.BICUBIC if key == "image" else Image.Resampling.NEAREST
                                 image = image.resize((height * 2, height), method)
                                 temporary = path.with_suffix(".tmp")
@@ -86,19 +93,41 @@ def load_data(directory, height=None, prepare=True):
                         progress.update(1)
             (output / ".complete").touch()
         result[split] = paths
+        source_manifest(directory, split, len(paths), prepare)
     return result
 
 
-def sampling_weights(rows, directory, height, prepare=True):
+def source_manifest(directory, split, count, prepare=True):
+    """Read source names without decoding images; reuse this CPU-prepared metadata."""
+    path = Path(directory) / f"{split}_sources.json"
+    sources = json.loads(path.read_text()) if path.exists() else []
+    if len(sources) != count:
+        if not prepare:
+            raise ValueError(f"Missing {split} source metadata; run CPU preparation first.")
+        sources = []
+        for shard in sorted((Path(directory) / "data").glob(f"{split}-*.parquet")):
+            for batch in pq.ParquetFile(shard).iter_batches(
+                    batch_size=64, columns=["image.path"], use_threads=False):
+                sources.extend(sample["image"]["path"] or "unknown" for sample in batch.to_pylist())
+        if len(sources) != count:
+            raise ValueError(f"Source metadata count differs for {split}.")
+        temporary = path.with_suffix(".tmp")
+        temporary.write_text(json.dumps(sources) + "\n")
+        temporary.replace(path)
+    return sources
+
+
+def sampling_weights(rows, directory, height, prepare=True, label_map=None, quiet=False):
     """Cache training-only Dead fractions on CPU; reuse them during GPU training."""
     settings = config.SAMPLING
+    label_map = LABEL_MAP if label_map is None else np.asarray(label_map, dtype=np.uint8)
     if not settings["enabled"]:
         return None, {"enabled": False}
     threshold, boost = settings["dead_min_fraction"], settings["dead_image_weight"]
     if not 0 < threshold <= 1 or not math.isfinite(boost) or boost < 1:
         raise ValueError("Use 0 < dead_min_fraction <= 1 and finite dead_image_weight >= 1.")
     cache = Path(directory) / f"resized_{height}" / "train_sampling.json"
-    metadata = {"masks": [mask.name for _, mask in rows], "label_map": LABEL_MAP.tolist()}
+    metadata = {"masks": [mask.name for _, mask in rows], "label_map": label_map.tolist()}
     cached = json.loads(cache.read_text()) if cache.exists() else {}
     fractions = cached.get("dead_fractions", [])
     if (any(cached.get(key) != value for key, value in metadata.items())
@@ -106,9 +135,9 @@ def sampling_weights(rows, directory, height, prepare=True):
         if not prepare:
             raise ValueError("Missing or stale training sampling statistics; run CPU preparation first.")
         fractions = []
-        for _, mask_path in tqdm(rows, desc="Counting training Dead pixels (CPU)"):
+        for _, mask_path in tqdm(rows, desc="Counting training Dead pixels (CPU)", disable=quiet):
             with Image.open(mask_path) as mask:
-                target = LABEL_MAP[np.asarray(mask)]
+                target = label_map[np.asarray(mask)]
             valid_pixels = np.count_nonzero(target != IGNORE)
             fractions.append(np.count_nonzero(target == 3) / max(1, valid_pixels))
         cache.parent.mkdir(parents=True, exist_ok=True)
@@ -135,14 +164,15 @@ def image_tensor(image, size):
     return (pixels - mean) / std
 
 
-def remap_mask(mask, size):
+def remap_mask(mask, size, label_map=None):
     ids = np.asarray(mask.resize(size, Image.Resampling.NEAREST))
-    return torch.from_numpy(LABEL_MAP[ids].astype(np.int64))
+    label_map = LABEL_MAP if label_map is None else np.asarray(label_map, dtype=np.uint8)
+    return torch.from_numpy(label_map[ids].astype(np.int64))
 
 
-def augment_pair(image, mask):
+def augment_pair(image, mask, settings=None):
     """Apply the same geometry to image/mask, and mild color changes to image only."""
-    settings = config.AUGMENT
+    settings = config.AUGMENT if settings is None else settings
     if torch.rand(()).item() < settings["crop_probability"]:
         fraction = math.sqrt(torch.empty(()).uniform_(*settings["crop_scale"]).item())
         width, height = image.size
@@ -163,8 +193,13 @@ def augment_pair(image, mask):
 
 
 class Corals(Dataset):
-    def __init__(self, rows, height, augment=False):
+    def __init__(self, rows, height, augment=False, sources=None, label_map=None):
         self.rows, self.size, self.augment = rows, (height * 2, height), augment
+        self.sources = sources
+        self.label_map = LABEL_MAP if label_map is None else np.asarray(label_map, dtype=np.uint8)
+        self.augmentation = dict(config.AUGMENT)
+        if sources is not None and (augment or len(sources) != len(rows)):
+            raise ValueError("Evaluation metadata requires unaugmented, matching source rows.")
 
     def __len__(self):
         return len(self.rows)
@@ -174,8 +209,14 @@ class Corals(Dataset):
         with Image.open(image_path) as source, Image.open(mask_path) as mask:
             image = source.convert("RGB")
             if self.augment:
-                image, mask = augment_pair(image, mask)
-            return image_tensor(image, self.size), remap_mask(mask, self.size)
+                image, mask = augment_pair(image, mask, self.augmentation)
+            pixels, target = image_tensor(image, self.size), remap_mask(mask, self.size, self.label_map)
+            if self.sources is None:
+                return pixels, target
+            original = torch.from_numpy(np.array(mask.resize(
+                self.size, Image.Resampling.NEAREST)).astype(np.int64))
+            match = re.match(r"(site\d+)_", Path(self.sources[index]).name)
+            return pixels, target, original, match[1] if match else "unknown"
 
 
 class CoralSegmenter(nn.Module):
@@ -335,8 +376,13 @@ def amp_dtype(device):
 
 
 @torch.inference_mode()
-def evaluate(model, loader, device):
+def evaluate(model, loader, device, quiet=False, include_loss=False):
     model.eval()
+    annotation = getattr(model, "dataset_config", None) or dataset_config("V1")
+    legacy_lookup = torch.tensor(annotation["source_to_legacy_id"], device=device)
+    fine_dead = [sid for sid, target in enumerate(annotation["label_map"]) if target == 3]
+    fine_correct = {sid: 0 for sid in fine_dead}
+    fine_support = dict(fine_correct)
     confusion = torch.zeros((len(CLASSES), len(CLASSES)), dtype=torch.int64, device=device)
     ensemble = isinstance(model, CoralEnsemble)
     member_confusions = [torch.zeros_like(confusion) for _ in range(model.n_members)] if ensemble else []
@@ -344,7 +390,13 @@ def evaluate(model, loader, device):
     bin_count = torch.zeros(bins, dtype=torch.float64, device=device)
     bin_correct, bin_confidence = bin_count.clone(), bin_count.clone()
     nll = brier = entropy = disagreement = count = 0.0
-    for images, target in tqdm(loader, desc="Evaluating"):
+    subtype_correct = {sid: 0 for sid in CORAL_IDS[3]}
+    subtype_support = dict(subtype_correct)
+    site_confusions = {}
+    has_metadata = False
+    loss_sum, valid_count = 0.0, 0
+    for batch in tqdm(loader, desc="Evaluating", disable=quiet):
+        images, target = batch[:2]
         images, target = images.to(device, non_blocking=True), target.to(device, non_blocking=True)
         dtype = amp_dtype(device)
         valid = target != IGNORE
@@ -354,9 +406,36 @@ def evaluate(model, loader, device):
                 probability = stats["probabilities"]
                 prediction = probability.argmax(1)
             else:
-                prediction = model(images).argmax(1)
+                logits = model(images)
+                prediction = logits.argmax(1)
+        if include_loss:
+            if ensemble:
+                loss = F.nll_loss(probability.float().clamp_min(1e-8).log(), target,
+                                  ignore_index=IGNORE, reduction="sum")
+            else:
+                loss = F.cross_entropy(logits.float(), target, ignore_index=IGNORE, reduction="sum")
+            loss_sum += loss.item()
+            valid_count += int(valid.sum())
         pairs = len(CLASSES) * target[valid] + prediction[valid]
         confusion += torch.bincount(pairs, minlength=len(CLASSES) ** 2).reshape_as(confusion)
+        if len(batch) == 4:
+            has_metadata = True
+            originals, sites = batch[2].to(device), batch[3]
+            legacy_originals = legacy_lookup[originals]
+            for sid in CORAL_IDS[3]:
+                selected = legacy_originals == sid
+                subtype_support[sid] += selected.sum().item()
+                subtype_correct[sid] += (selected & (prediction == 3)).sum().item()
+            if annotation["annotation_version"] == "V2":
+                for sid in fine_dead:
+                    selected = originals == sid
+                    fine_support[sid] += selected.sum().item()
+                    fine_correct[sid] += (selected & (prediction == 3)).sum().item()
+            for truth, predicted, site in zip(target, prediction, sites):
+                selected = truth != IGNORE
+                pairs = 4 * truth[selected] + predicted[selected]
+                matrix = torch.bincount(pairs, minlength=16).reshape(4, 4).cpu()
+                site_confusions.setdefault(site, torch.zeros_like(matrix)).add_(matrix)
         if ensemble and valid.any():
             for matrix, member in zip(member_confusions, stats["members"]):
                 pairs = len(CLASSES) * target[valid] + member.argmax(1)[valid]
@@ -375,6 +454,23 @@ def evaluate(model, loader, device):
             bin_correct.scatter_add_(0, indices, (predicted == truth).double())
             count += truth.numel()
     result = scores(confusion.cpu())
+    if include_loss:
+        result["loss"] = loss_sum / valid_count if valid_count else None
+    if has_metadata:
+        result["dead_original_categories"] = {
+            str(sid): {"support": subtype_support[sid], "correct": subtype_correct[sid],
+                       "recall": subtype_correct[sid] / subtype_support[sid] if subtype_support[sid] else None}
+            for sid in CORAL_IDS[3]
+        }
+        result["by_site"] = {site: scores(matrix) for site, matrix in sorted(site_confusions.items())}
+        result["dead_category_taxonomy"] = annotation["dead_category_taxonomy"]
+        if annotation["annotation_version"] == "V2":
+            result["dead_source_categories"] = {
+                str(sid): {"label": annotation["source_labels"][str(sid)],
+                           "support": fine_support[sid], "correct": fine_correct[sid],
+                           "recall": fine_correct[sid] / fine_support[sid] if fine_support[sid] else None}
+                for sid in fine_dead
+            }
     if ensemble:
         result["members"] = [scores(matrix.cpu()) for matrix in member_confusions]
         result["uncertainty"] = {
@@ -386,16 +482,19 @@ def evaluate(model, loader, device):
     return result
 
 
-def save_checkpoint(model, height, epoch, validation, directory=OUTPUT):
+def save_checkpoint(model, height, epoch, validation, directory=OUTPUT, training_settings=None):
     directory = Path(directory)
     directory.mkdir(parents=True, exist_ok=True)
-    if isinstance(model, CoralEnsemble):
+    if isinstance(model, (CoralEnsemble, CoralDINO)):
         temporary = directory / "head.tmp"
-        torch.save({"format": "lora_ensemble_v1", "weights": model.trainable_state(),
+        torch.save({"format": "dinov3_single_v1" if isinstance(model, CoralDINO) else "lora_ensemble_v1",
+                    "weights": model.trainable_state(),
                     "height": height, "classes": CLASSES, "epoch": epoch,
                     "validation": validation, "model_config": model.model_config,
                     "lora_config": model.lora_config,
-                    "ensemble_config": model.ensemble_config}, temporary)
+                    "dataset_config": getattr(model, "dataset_config", None) or dataset_config("V1"),
+                    **({"training_settings": training_settings} if training_settings is not None else {}),
+                    "ensemble_config": getattr(model, "ensemble_config", None)}, temporary)
         temporary.replace(directory / "head.pt")
         return
     model.backbone.save_pretrained(directory / "adapter", save_embedding_layers=False)
@@ -406,10 +505,17 @@ def save_checkpoint(model, height, epoch, validation, directory=OUTPUT):
 
 def load_checkpoint(directory=OUTPUT, local_files_only=False):
     state = torch.load(Path(directory) / "head.pt", map_location="cpu", weights_only=True)
+    if state.get("format") == "dinov3_single_v1":
+        model = CoralDINO(state["model_config"], state["lora_config"],
+                          ROOT / ".cache/huggingface/hub", local_files_only=local_files_only)
+        model.load_trainable_state(state["weights"])
+        model.dataset_config = state.get("dataset_config") or dataset_config("V1")
+        return model, state["height"]
     if state.get("format") == "lora_ensemble_v1":
         model = CoralEnsemble(state["model_config"], state["lora_config"], state["ensemble_config"],
                               ROOT / ".cache/huggingface/hub", local_files_only=local_files_only)
         model.load_trainable_state(state["weights"])
+        model.dataset_config = state.get("dataset_config") or dataset_config("V1")
         return model, state["height"]
     if "fusion" not in state:
         raise ValueError("Checkpoint is missing fusion weights. Retrain with the updated train.py.")
@@ -423,6 +529,7 @@ def load_checkpoint(directory=OUTPUT, local_files_only=False):
     model = CoralSegmenter(adapter_dir=Path(directory) / "adapter", model_config=model_config)
     model.head.load_state_dict(state["head"])
     model.fusion.load_state_dict(state["fusion"])
+    model.dataset_config = state.get("dataset_config") or dataset_config("V1")
     return model, state["height"]
 
 
@@ -439,154 +546,367 @@ def make_scheduler(optimizer, epochs, warmup_epochs, min_lr):
     return torch.optim.lr_scheduler.LambdaLR(optimizer, multipliers)
 
 
-def main(argv=None, on_epoch_end=None, prepared_data=False):
+class EarlyStopping:
+    """Patience tracks meaningful gains; checkpoint selection still uses the exact best."""
+    def __init__(self, patience, min_epochs, min_delta):
+        self.patience, self.min_epochs, self.min_delta = patience, min_epochs, min_delta
+        self.reference, self.bad_epochs = -math.inf, 0
+
+    def update(self, value, epoch):
+        if value is not None and math.isfinite(value) and value > self.reference + self.min_delta:
+            self.reference, self.bad_epochs = value, 0
+        else:
+            self.bad_epochs += 1
+        return self.patience > 0 and epoch >= self.min_epochs and self.bad_epochs >= self.patience
+
+
+def train_uniform_epoch(model, loader, optimizer, scaler, scheduler, device,
+                        accumulation_steps, max_updates=None, description="Training", quiet=False):
+    """Accumulate CE over valid pixels, including Background and a short final window."""
+    trainable = [p for p in model.parameters() if p.requires_grad]
+    optimizer.zero_grad(set_to_none=True)
+    pending = valid_window = updates = valid_total = 0
+    loss_total, normalizer = 0.0, None
+    dtype = amp_dtype(device)
+
+    def step():
+        scaler.unscale_(optimizer)
+        # Normalize by the actual valid-pixel count, not microbatch count.
+        for parameter in trainable:
+            if parameter.grad is not None:
+                parameter.grad.mul_(normalizer / valid_window)
+        torch.nn.utils.clip_grad_norm_(trainable, config.TRAIN["gradient_clip"], error_if_nonfinite=True)
+        previous_scale = scaler.get_scale()
+        scaler.step(optimizer)
+        scaler.update()
+        performed = scaler.get_scale() >= previous_scale
+        if performed:
+            scheduler.step()
+        optimizer.zero_grad(set_to_none=True)
+        return int(performed)
+
+    for images, target in tqdm(loader, desc=description, disable=quiet):
+        images, target = images.to(device, non_blocking=True), target.to(device, non_blocking=True)
+        valid = int((target != IGNORE).sum())
+        if not valid:
+            continue
+        if normalizer is None:
+            normalizer = target.numel() * accumulation_steps
+        with torch.autocast(device.type, dtype=dtype, enabled=dtype is not None):
+            logits = model(images)
+            loss_sum = F.cross_entropy(logits.float(), target, ignore_index=IGNORE, reduction="sum")
+            loss = loss_sum / normalizer
+        if not torch.isfinite(loss):
+            raise RuntimeError("Non-finite cross-entropy during training.")
+        scaler.scale(loss).backward()
+        loss_total += loss_sum.item()
+        valid_total += valid
+        valid_window += valid
+        pending += 1
+        del logits, loss, loss_sum
+        if pending == accumulation_steps:
+            updates += step()
+            pending = valid_window = 0
+            if updates == 1 and not quiet:
+                memory = torch.cuda.max_memory_allocated() / 2**30 if device.type == "cuda" else 0
+                print(f"Optimizer update passed; peak allocated GPU memory={memory:.2f} GiB", flush=True)
+            if max_updates is not None and updates >= max_updates:
+                break
+    if pending:
+        updates += step()
+    return loss_total / max(1, valid_total), updates
+
+
+def main(argv=None, on_epoch_end=None, prepared_data=False, *, compact_output=None,
+         initialize_model=None, run_metadata=None):
+    # Existing Modal callers supply a commit callback and retain their output contract.
+    compact = (on_epoch_end is None and not prepared_data) if compact_output is None else compact_output
+    if compact:
+        from local_output import quiet_downloads
+        with quiet_downloads():
+            return run(argv, on_epoch_end, prepared_data, compact=True,
+                       initialize_model=initialize_model, run_metadata=run_metadata)
+    return run(argv, on_epoch_end, prepared_data, compact=False,
+               initialize_model=initialize_model, run_metadata=run_metadata)
+
+
+def run(argv, on_epoch_end, prepared_data, compact, initialize_model=None, run_metadata=None):
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--annotation-version", choices=["V1", "V2"], default=config.DATASET["annotation_version"])
     parser.add_argument("--epochs", type=int, default=config.TRAIN["epochs"])
     parser.add_argument("--batch-size", type=int, default=config.TRAIN["batch_size"])
+    parser.add_argument("--accumulation-steps", type=int, default=config.TRAIN.get("accumulation_steps", 1))
+    parser.add_argument("--max-updates", type=int, default=config.TRAIN.get("max_updates", 0), help="Optimizer-update ceiling; 0 disables")
+    parser.add_argument("--patience", type=int, default=config.TRAIN.get("early_stopping_patience", 0))
+    parser.add_argument("--min-epochs", type=int, default=config.TRAIN.get("early_stopping_min_epochs", 1))
+    parser.add_argument("--min-delta", type=float, default=config.TRAIN.get("early_stopping_min_delta", 0.0))
+    parser.add_argument("--seed", type=int, default=config.TRAIN["seed"])
+    parser.add_argument("--decoder", choices=["dpt", "shallow"], help="Single-model decoder override")
     parser.add_argument("--height", type=int, default=config.TRAIN["height"], help="Multiple of backbone patch size; width is twice this")
     parser.add_argument("--lr", type=float, default=config.TRAIN["lr"])
     parser.add_argument("--warmup-epochs", type=int, default=config.TRAIN["warmup_epochs"], help="Linear warmup before cosine decay")
-    parser.add_argument("--warmup-steps", type=int, default=config.TRAIN["warmup_steps"], help="Ensemble warmup in optimizer updates; overrides warmup-epochs")
+    parser.add_argument("--warmup-steps", type=int, default=config.TRAIN["warmup_steps"], help="Uniform-CE warmup in optimizer updates; overrides warmup-epochs")
     parser.add_argument("--min-lr", type=float, default=config.TRAIN["min_lr"], help="Final learning rate after cosine decay")
-    parser.add_argument("--output", type=Path, default=OUTPUT, help="Directory for this run's checkpoint and metrics")
+    parser.add_argument("--output", type=Path, help="Directory for this run's checkpoint and metrics")
     parser.add_argument("--download-only", action="store_true")
     args = parser.parse_args(argv)
+    annotation = dataset_config(args.annotation_version)
+    if config.DATASET.get("revision"):
+        annotation["revision"] = config.DATASET["revision"]
+    if args.output is None:
+        base = ROOT / "runs" / config.RUN_NAME if compact else OUTPUT
+        args.output = base if args.annotation_version == "V1" else base.with_name(base.name + "-v2")
+    checkpoint_dir = ROOT / "checkpoints" / "local" / args.output.name if compact else args.output
+    model_config = dict(config.MODEL)
+    if args.decoder:
+        model_config["decoder"] = args.decoder
+    ensemble = model_config.get("architecture") == "lora_ensemble"
+    single = model_config.get("architecture") == "dinov3_single"
+    if args.decoder and not single:
+        parser.error("--decoder requires the dinov3_single architecture.")
+    if args.accumulation_steps < 1 or args.max_updates < 0 or args.patience < 0 or args.min_epochs < 1 or args.seed < 0:
+        parser.error("Use positive accumulation/min-epochs and nonnegative update ceiling/patience/seed.")
+    if not math.isfinite(args.min_delta) or args.min_delta < 0:
+        parser.error("--min-delta must be finite and nonnegative.")
+    if not single and (args.accumulation_steps != 1 or args.max_updates or args.patience):
+        parser.error("Accumulation, update ceilings and early stopping require dinov3_single.")
     patch = config.MODEL.get("patch_size", 14)
     if args.height < patch or args.height % patch or args.epochs < 1 or args.batch_size < 1:
         parser.error(f"Use positive epochs/batch size and a height divisible by {patch}.")
     if args.warmup_steps < 0:
         parser.error("--warmup-steps must be nonnegative.")
-    if not 0 <= args.warmup_epochs < args.epochs:
+    if not (single or ensemble) and not 0 <= args.warmup_epochs < args.epochs:
         parser.error("--warmup-epochs must be between 0 and epochs - 1.")
     if not (math.isfinite(args.lr) and math.isfinite(args.min_lr) and 0 < args.min_lr <= args.lr):
         parser.error("Use finite learning rates with 0 < min-lr <= lr.")
 
-    directory = ROOT / "data/coralscapes" if prepared_data else download_data()
+    if not args.download_only and args.output.exists():
+        parser.error(f"Output directory already exists: {args.output}; choose a new --output.")
+    if compact and not args.download_only and checkpoint_dir.exists():
+        parser.error(f"Checkpoint directory already exists: {checkpoint_dir}; choose a new run name.")
+    if compact:
+        print("Preparing data and model...", flush=True)
+    directory = data_directory(ROOT, annotation) if prepared_data else download_data(annotation)
     if args.download_only:
         print(f"Dataset downloaded to {directory}")
         return
-    torch.manual_seed(config.TRAIN["seed"])
+    torch.manual_seed(args.seed)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     dtype = amp_dtype(device)
     print(f"Device: {device}; precision: {dtype or torch.float32}", flush=True)
     if device.type == "cuda":
-        torch.backends.cudnn.benchmark = True
-    torch.set_num_threads(4)
-    data = load_data(directory, args.height, prepare=not prepared_data)
+        torch.backends.cudnn.benchmark = config.TRAIN.get("cudnn_benchmark", True)
+        if "allow_tf32" in config.TRAIN:
+            torch.backends.cuda.matmul.allow_tf32 = config.TRAIN["allow_tf32"]
+            torch.backends.cudnn.allow_tf32 = config.TRAIN["allow_tf32"]
+    torch.set_num_threads(config.TRAIN.get("torch_threads", 4))
+    data = load_data(directory, args.height, prepare=not prepared_data, settings=annotation,
+                     splits=("train", "validation") if compact else ("train", "validation", "test"),
+                     quiet=compact)
     weights, sampling_summary = sampling_weights(
-        data["train"], directory, args.height, prepare=not prepared_data,
+        data["train"], directory, args.height, prepare=not prepared_data, label_map=annotation["label_map"],
+        quiet=compact,
     )
-    print(f"Training sampling: {json.dumps(sampling_summary)}", flush=True)
+    if not compact:
+        print(f"Training sampling: {json.dumps(sampling_summary)}", flush=True)
     if on_epoch_end:
         on_epoch_end()  # Persist downloaded data and resized masks on Modal.
-    train_set = Corals(data["train"], args.height, augment=True)
+    train_set = Corals(data["train"], args.height, augment=True, label_map=annotation["label_map"])
     loader_options = {"batch_size": args.batch_size, "num_workers": config.TRAIN["num_workers"],
                       "pin_memory": device.type == "cuda",
                       "persistent_workers": config.TRAIN["num_workers"] > 0}
+    if config.TRAIN["num_workers"] > 0:
+        loader_options["prefetch_factor"] = config.TRAIN.get("prefetch_factor", 2)
     sampler = None if weights is None else WeightedRandomSampler(
         weights, num_samples=len(train_set), replacement=True,
-        generator=torch.Generator().manual_seed(config.TRAIN["seed"]),
+        generator=torch.Generator().manual_seed(args.seed),
     )
     train_loader = DataLoader(train_set, sampler=sampler, shuffle=sampler is None, **loader_options)
-    val_loader = DataLoader(Corals(data["validation"], args.height), **loader_options)
-    ensemble = config.MODEL.get("architecture") == "lora_ensemble"
-    model = (CoralEnsemble(config.MODEL, config.LORA, config.ENSEMBLE,
-                          ROOT / ".cache/huggingface/hub", local_files_only=prepared_data)
-             if ensemble else CoralSegmenter()).to(device)
+
+    def evaluation_dataset(split):
+        return Corals(data[split], args.height, sources=source_manifest(
+            directory, split, len(data[split]), prepare=not prepared_data), label_map=annotation["label_map"])
+
+    val_loader = DataLoader(evaluation_dataset("validation"), **loader_options)
+    cache_dir = ROOT / ".cache/huggingface/hub"
+    if single:
+        model = CoralDINO(model_config, config.LORA, cache_dir, local_files_only=prepared_data)
+    elif ensemble:
+        model = CoralEnsemble(model_config, config.LORA, config.ENSEMBLE,
+                              cache_dir, local_files_only=prepared_data)
+    else:
+        model = CoralSegmenter()
+    model.dataset_config = annotation
+    model.to(device)
+    initialization = initialize_model(model, train_set, device) if initialize_model else None
     trainable = [p for p in model.parameters() if p.requires_grad]
     print(f"Trainable parameters: {sum(p.numel() for p in trainable):,}", flush=True)
     optimizer = torch.optim.AdamW([
         {"params": [p for p in model.backbone.parameters() if p.requires_grad], "lr": args.lr},
-        {"params": (list(model.decoders.parameters()) if ensemble else
+        {"params": (list(model.decoder.parameters()) if single else
+                    list(model.decoders.parameters()) if ensemble else
                     list(model.fusion.parameters()) + list(model.head.parameters())),
          "lr": config.TRAIN["head_lr"]},
-    ], weight_decay=config.TRAIN["weight_decay"])
-    total_updates = args.epochs * len(train_loader)
-    if ensemble and args.warmup_steps >= total_updates:
+    ], weight_decay=config.TRAIN["weight_decay"],
+       betas=tuple(config.TRAIN.get("betas", [.9, .999])), eps=config.TRAIN.get("eps", 1e-8))
+    total_updates = args.epochs * math.ceil(len(train_loader) / args.accumulation_steps)
+    if args.max_updates:
+        total_updates = min(total_updates, args.max_updates)
+    per_update = ensemble or single
+    if per_update and args.warmup_steps >= total_updates:
         raise ValueError("warmup_steps must be smaller than total optimizer updates.")
-    scheduler = make_scheduler(optimizer, total_updates if ensemble else args.epochs,
-                               args.warmup_steps if ensemble else args.warmup_epochs, args.min_lr)
+    scheduler = make_scheduler(optimizer, total_updates if per_update else args.epochs,
+                               args.warmup_steps if per_update else args.warmup_epochs, args.min_lr)
     scaler = torch.amp.GradScaler("cuda", enabled=dtype == torch.float16)
     best = -1.0
+    best_epoch = None
     history = []
-    args.output.mkdir(parents=True, exist_ok=True)
+    optimizer_updates = 0
+    stop_reason = None
+    stopper = EarlyStopping(args.patience, args.min_epochs, args.min_delta)
+    args.output.mkdir(parents=True, exist_ok=False)
+    if compact:
+        from local_output import LocalOutput
+        output = LocalOutput(args.output)
 
     def write_metrics(test=None):
+        if compact:
+            output.append(history[-1], best_epoch=best_epoch)
+            return
         temporary = args.output / "metrics.tmp"
         temporary.write_text(json.dumps(
-            {"settings": {**config.TRAIN, **vars(args), "model": config.MODEL,
-                          "lora": config.LORA, "loss": config.LOSS,
+            {"settings": {**config.TRAIN, **vars(args), "model": model_config,
+                          "lora": config.LORA,
+                          "loss": {"name": "cross_entropy", "ignore_index": IGNORE,
+                                   "class_weights": None} if per_update else config.LOSS,
+                          "early_stopping_patience": args.patience,
+                          "early_stopping_min_epochs": args.min_epochs,
+                          "early_stopping_min_delta": args.min_delta,
                           "ensemble": config.ENSEMBLE if ensemble else None,
-                          "effective_loss": "uniform_cross_entropy" if ensemble else "hierarchical_focal",
+                          "effective_loss": "uniform_cross_entropy" if per_update else "hierarchical_focal",
+                          "effective_batch_size": args.batch_size * args.accumulation_steps,
+                          "planned_optimizer_updates": total_updates,
+                          "num_classes": len(CLASSES), "ignore_index": IGNORE,
+                          "annotation_version": annotation["annotation_version"], "dataset": annotation,
+                          "split_sizes": {split: len(rows) for split, rows in data.items()},
+                          "split_policy": "official_train_validation_test",
+                          "feature_layer_indexing": "hidden-state tuple; index 0 is embedding",
                           "upstream_commit": "812ced225717fdcce3c1e236e5dd17d14c2b1b2b" if ensemble else None,
                           "augmentation": config.AUGMENT,
                           "sampling": config.SAMPLING,
                           "effective_precision": str(dtype or torch.float32)},
-             "sampling_summary": sampling_summary, "history": history, "test": test},
+             "sampling_summary": sampling_summary, "history": history, "test": test,
+             "optimizer_updates": optimizer_updates, "stop_reason": stop_reason},
             indent=2, default=str, allow_nan=False,
         ) + "\n")
         temporary.replace(args.output / "metrics.json")
 
     for epoch in range(1, args.epochs + 1):
+        started = time.perf_counter()
+        if compact and device.type == "cuda":
+            torch.cuda.reset_peak_memory_stats(device)
         model.train()
         learning_rate = optimizer.param_groups[0]["lr"]
         head_learning_rate = optimizer.param_groups[1]["lr"]
         total_loss, steps = 0.0, 0
-        for images, target in tqdm(train_loader, desc=f"Epoch {epoch}/{args.epochs}"):
-            images, target = images.to(device, non_blocking=True), target.to(device, non_blocking=True)
-            if not (target != IGNORE).any():
-                continue
-            optimizer.zero_grad(set_to_none=True)
-            batch_loss = 0.0
-            # Same images/augmentation and one optimizer update for all members.
-            # Backpropagate each member immediately: equivalent mean loss, less activation RAM.
-            for member in range(model.n_members if ensemble else 1):
-                with torch.autocast(device.type, dtype=dtype, enabled=dtype is not None):
+        if single:
+            remaining = args.max_updates - optimizer_updates if args.max_updates else None
+            epoch_loss, steps = train_uniform_epoch(
+                model, train_loader, optimizer, scaler, scheduler, device,
+                args.accumulation_steps, remaining, f"Epoch {epoch}/{args.epochs}",
+                quiet=compact,
+            )
+        else:
+            for images, target in tqdm(train_loader, desc=f"Epoch {epoch}/{args.epochs}", disable=compact):
+                images, target = images.to(device, non_blocking=True), target.to(device, non_blocking=True)
+                if not (target != IGNORE).any():
+                    continue
+                optimizer.zero_grad(set_to_none=True)
+                batch_loss = 0.0
+                # Same images/augmentation and one optimizer update for all members.
+                # Backpropagate each member immediately: equivalent mean loss, less activation RAM.
+                for member in range(model.n_members if ensemble else 1):
+                    with torch.autocast(device.type, dtype=dtype, enabled=dtype is not None):
+                        if ensemble:
+                            logits = model.member_logits(images, member)
+                            loss = F.cross_entropy(logits.float(), target, ignore_index=IGNORE) / model.n_members
+                        else:
+                            coral_logits, health_logits, _ = model.hierarchical_logits(images)
+                            loss = hierarchical_loss(coral_logits, health_logits, target)
+                    if not torch.isfinite(loss):
+                        raise RuntimeError(f"Non-finite training loss in epoch {epoch}, member {member}.")
+                    scaler.scale(loss).backward()
+                    batch_loss += loss.item()
                     if ensemble:
-                        logits = model.member_logits(images, member)
-                        loss = F.cross_entropy(logits.float(), target, ignore_index=IGNORE) / model.n_members
-                    else:
-                        coral_logits, health_logits, _ = model.hierarchical_logits(images)
-                        loss = hierarchical_loss(coral_logits, health_logits, target)
-                if not torch.isfinite(loss):
-                    raise RuntimeError(f"Non-finite training loss in epoch {epoch}, member {member}.")
-                scaler.scale(loss).backward()
-                batch_loss += loss.item()
+                        del logits, loss  # Release this member's graph before the next forward.
+                scaler.unscale_(optimizer)
+                torch.nn.utils.clip_grad_norm_(trainable, config.TRAIN["gradient_clip"], error_if_nonfinite=True)
+                scaler.step(optimizer)
+                scaler.update()
                 if ensemble:
-                    del logits, loss  # Release this member's graph before the next forward.
-            scaler.unscale_(optimizer)
-            torch.nn.utils.clip_grad_norm_(trainable, config.TRAIN["gradient_clip"], error_if_nonfinite=True)
-            scaler.step(optimizer)
-            scaler.update()
-            if ensemble:
-                scheduler.step()
-            total_loss += batch_loss
-            steps += 1
-            if epoch == 1 and steps == 1:
-                memory = torch.cuda.max_memory_allocated() / 2**30 if device.type == "cuda" else 0
-                print(f"First optimizer update passed; loss={batch_loss:.4f}; "
-                      f"peak allocated GPU memory={memory:.2f} GiB", flush=True)
-        validation = evaluate(model, val_loader, device)
+                    scheduler.step()
+                total_loss += batch_loss
+                steps += 1
+                if epoch == 1 and steps == 1 and not compact:
+                    memory = torch.cuda.max_memory_allocated() / 2**30 if device.type == "cuda" else 0
+                    print(f"First optimizer update passed; loss={batch_loss:.4f}; "
+                          f"peak allocated GPU memory={memory:.2f} GiB", flush=True)
+            epoch_loss = total_loss / max(steps, 1)
+        optimizer_updates += steps
+        if not steps:
+            raise RuntimeError("Epoch completed without any optimizer updates; check valid labels.")
+        validation = evaluate(model, val_loader, device, quiet=compact, include_loss=compact)
         record = {"epoch": epoch, "lr": learning_rate, "head_lr": head_learning_rate,
-                  "loss": total_loss / max(steps, 1), "validation": validation}
+                  "loss": epoch_loss, "optimizer_updates": optimizer_updates,
+                  "updates_this_epoch": steps, "validation": validation}
         history.append(record)
-        print(json.dumps(record), flush=True)
+        if not compact:
+            print(json.dumps(record), flush=True)
         if validation["coral_miou"] is not None and validation["coral_miou"] > best:
             best = validation["coral_miou"]
-            save_checkpoint(model, args.height, epoch, validation, args.output)
-        if steps and not ensemble:
+            best_epoch = epoch
+            save_checkpoint(model, args.height, epoch, validation, checkpoint_dir,
+                            training_settings={"seed": args.seed,
+                                               "train": {**vars(args), "output": str(args.output)},
+                                               "augmentation": config.AUGMENT, "sampling": config.SAMPLING,
+                                               "effective_precision": str(dtype or torch.float32),
+                                               "recipe": run_metadata,
+                                               "initialization": initialization} if compact else None)
+            if compact:
+                output.figure(model, val_loader.dataset, device, dtype, epoch)
+        if compact:
+            record["seconds"] = time.perf_counter() - started
+            record["peak_vram_gib"] = torch.cuda.max_memory_allocated(device) / 2**30 if device.type == "cuda" else 0.0
+        if steps and not per_update:
             scheduler.step()
+        should_stop = stopper.update(validation["coral_miou"], epoch)
+        if args.max_updates and optimizer_updates >= args.max_updates:
+            stop_reason = "max_updates"
+        elif should_stop:
+            stop_reason = "validation_patience"
+        elif epoch == args.epochs:
+            stop_reason = "max_epochs"
         write_metrics()
         if on_epoch_end:
             on_epoch_end()
+        if stop_reason:
+            if not compact:
+                print(f"Training stopped: {stop_reason}; optimizer updates={optimizer_updates}", flush=True)
+            break
 
+    if not (checkpoint_dir / "head.pt").exists():
+        raise RuntimeError("No finite validation coral mIoU was available for checkpoint selection.")
+    if compact:
+        print(f"Finished ({stop_reason}). Best epoch: {best_epoch}.\n"
+              f"Results: {args.output}\nModel: {checkpoint_dir / 'head.pt'}", flush=True)
+        return
     # Select using validation only, then evaluate the selected checkpoint on test once.
     del model, optimizer, scheduler, trainable
     if device.type == "cuda":
         torch.cuda.empty_cache()
     model, _ = load_checkpoint(args.output, local_files_only=prepared_data)
     model.to(device)
-    test_loader = DataLoader(Corals(data["test"], args.height), **loader_options)
+    test_loader = DataLoader(evaluation_dataset("test"), **loader_options)
     test = evaluate(model, test_loader, device)
     write_metrics(test)
     print(f"Test: {json.dumps(test)}\nSaved model: {args.output}")

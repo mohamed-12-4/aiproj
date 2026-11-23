@@ -1,0 +1,6 @@
+-r requirements.txt
+torchvision==0.23.0
+torchmetrics==1.8.2
+PyYAML==6.0.3
+modal==1.4.3
+imageio-ffmpeg==0.8.1

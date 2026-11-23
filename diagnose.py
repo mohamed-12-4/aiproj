@@ -15,6 +15,7 @@ from tqdm.auto import tqdm
 
 from train import (CLASSES, CORAL_IDS, IGNORE, LABEL_MAP, OUTPUT, ROOT,
                    amp_dtype, image_tensor, load_checkpoint, scores)
+from coral_data import checkpoint_dataset, data_directory, dataset_config
 
 
 def labels():
@@ -46,9 +47,11 @@ def class_counts(original):
     return np.array([np.count_nonzero(target == c) for c in [0, 1, 2, 3, IGNORE]], dtype=np.int64)
 
 
-def coverage(directory, height, output, split="validation"):
+def coverage(directory, height, output, split="validation", annotation=None):
     """Decode/count masks only on CPU. Preserve source filenames for GPU inference."""
     directory, output = Path(directory), Path(output)
+    annotation = dataset_config("V1") if annotation is None else annotation
+    legacy_lookup = np.asarray(annotation["source_to_legacy_id"], dtype=np.uint8)
     output.mkdir(parents=True, exist_ok=True)
     original_counts, resized_counts, original_fine = [], [], []
     rows = []
@@ -57,8 +60,8 @@ def coverage(directory, height, output, split="validation"):
                 batch_size=1, columns=["label", "image.path"], use_threads=False):
             sample = batch.to_pylist()[0]
             with Image.open(io.BytesIO(sample["label"]["bytes"])) as mask:
-                original = np.array(mask)
-                resized = np.array(mask.resize((height * 2, height), Image.Resampling.NEAREST))
+                original = legacy_lookup[np.array(mask)]
+                resized = legacy_lookup[np.array(mask.resize((height * 2, height), Image.Resampling.NEAREST))]
             counts, small = class_counts(original), class_counts(resized)
             fine = np.bincount(original.ravel(), minlength=256)
             original_counts.append(counts)
@@ -78,6 +81,8 @@ def coverage(directory, height, output, split="validation"):
     original_counts, resized_counts = np.stack(original_counts), np.stack(resized_counts)
     original_fine = np.stack(original_fine)
     summary = {"images": len(rows), "training_size_hw": [height, height * 2],
+               "annotation_version": annotation["annotation_version"],
+               "category_taxonomy": annotation["dead_category_taxonomy"],
                "coverage_definition": "images containing at least one pixel of a class",
                "counts_are_before_augmentation_and_oversampling": True}
     coverage_rows = []
@@ -182,6 +187,8 @@ def diagnose(checkpoint, directory, output, split="validation", batch_size=4):
     reference_validation = state["validation"]
     del state
     model, height = load_checkpoint(checkpoint, local_files_only=True)
+    annotation = model.dataset_config
+    legacy_lookup = np.asarray(annotation["source_to_legacy_id"], dtype=np.uint8)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     torch.set_num_threads(4)
     model.to(device).eval()
@@ -197,7 +204,7 @@ def diagnose(checkpoint, directory, output, split="validation", batch_size=4):
         with torch.autocast(device.type, dtype=dtype, enabled=dtype is not None):
             prediction = model(pixels.to(device)).argmax(1).cpu().numpy()
         for raw, pred, index in zip(original.numpy(), prediction, indices.tolist()):
-            matrix = source_confusion(raw, pred)
+            matrix = source_confusion(legacy_lookup[raw], pred)
             total += matrix
             per_image.append({**sources[index], **dead_row(matrix)})
             for sid in CORAL_IDS[3]:
@@ -222,6 +229,8 @@ def diagnose(checkpoint, directory, output, split="validation", batch_size=4):
     positive = [r for r in per_image if r["dead_pixels"] > 0]
     substantial = [r for r in positive if r["dead_pixels"] >= 1000]
     summary = {"checkpoint": str(checkpoint), "checkpoint_epoch": epoch, "split": split,
+               "annotation_version": annotation["annotation_version"],
+               "category_taxonomy": annotation["dead_category_taxonomy"],
                "mask_resolution": "training", "height": height, "width": height * 2,
                "images": len(sources), "metrics": scores(torch.from_numpy(confusion)),
                "confusion_matrix": confusion.tolist(), "confusion_axes": "rows=truth; columns=prediction",
@@ -245,15 +254,17 @@ def diagnose(checkpoint, directory, output, split="validation", batch_size=4):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--checkpoint", type=Path, default=OUTPUT)
-    parser.add_argument("--data", type=Path, default=ROOT / "data/coralscapes")
+    parser.add_argument("--data", type=Path)
     parser.add_argument("--output", type=Path)
     parser.add_argument("--split", choices=["validation", "test"], default="validation")
     parser.add_argument("--stage", choices=["coverage", "predict", "all"], default="all")
     parser.add_argument("--height", type=int, default=512)
     args = parser.parse_args()
+    annotation = checkpoint_dataset(args.checkpoint) if (args.checkpoint / "head.pt").exists() else dataset_config("V1")
+    args.data = args.data or data_directory(ROOT, annotation)
     output = args.output or args.checkpoint / "diagnostics" / args.split
     if args.stage in ("coverage", "all"):
-        coverage(args.data, args.height, output, args.split)
+        coverage(args.data, args.height, output, args.split, annotation)
     if args.stage in ("predict", "all"):
         diagnose(args.checkpoint, args.data, output, args.split)
 

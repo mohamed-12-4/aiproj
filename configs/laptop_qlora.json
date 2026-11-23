@@ -1,0 +1,99 @@
+{
+  "dataset": {
+    "id": "josauder/coralscapesV2",
+    "annotation_version": "V2",
+    "classes": ["Background", "Healthy", "Bleached", "Dead"],
+    "revision": "8a4567b2fbec14882e09aebff63a7a1ca5e24dca"
+  },
+  "model": {
+    "id": "facebook/dinov3-vitb16-pretrain-lvd1689m",
+    "revision": "5931719e67bbdb9737e363e781fb0c67687896bc",
+    "architecture": "dinov3_single",
+    "decoder": "dpt",
+    "num_classes": 4,
+    "ignore_index": 255,
+    "patch_size": 16,
+    "feature_layers": [3, 6, 9, -1],
+    "dpt_neck_channels": [48, 96, 192, 384],
+    "dpt_fusion_channels": 128,
+    "dpt_reassemble_factors": [4, 2, 1, 0.5],
+    "dpt_dropout": 0.1,
+    "encoder_checkpointing": true,
+    "decoder_checkpointing": false,
+    "quantization": {
+      "load_in_4bit": true,
+      "quant_type": "nf4",
+      "double_quant": true,
+      "compute_dtype": "bfloat16"
+    }
+  },
+  "lora": {
+    "r": 16,
+    "lora_alpha": 16,
+    "lora_dropout": 0.05,
+    "target_modules": ["q_proj", "v_proj"],
+    "bias": "none",
+    "init_lora_weights": true
+  },
+  "train": {
+    "height": 512,
+    "width": 1024,
+    "epochs": 20,
+    "batch_size": 2,
+    "accumulation_steps": 4,
+    "max_updates": 0,
+    "early_stopping_patience": 0,
+    "early_stopping_min_epochs": 1,
+    "early_stopping_min_delta": 0.0,
+    "lr": 0.0001,
+    "head_lr": 0.0001,
+    "warmup_epochs": 0,
+    "warmup_steps": 200,
+    "min_lr": 0.000001,
+    "weight_decay": 0.01,
+    "betas": [0.9, 0.999],
+    "eps": 1e-8,
+    "gradient_clip": 1.0,
+    "seed": 42,
+    "precision": "bf16",
+    "num_workers": 4,
+    "prefetch_factor": 2,
+    "torch_threads": 4,
+    "cudnn_benchmark": false,
+    "allow_tf32": true
+  },
+  "augmentation": {
+    "crop_probability": 0.8,
+    "crop_scale": [0.6, 1.0],
+    "horizontal_flip": 0.5,
+    "vertical_flip": 0.2,
+    "brightness": 0.15,
+    "contrast": 0.15,
+    "saturation": 0.08
+  },
+  "sampling": {"enabled": false},
+  "runtime": {
+    "optimizer": "adamw",
+    "scheduler": "cosine",
+    "loss": "uniform_cross_entropy",
+    "validate_every_epochs": 1,
+    "selection_metric": "validation_coral_miou",
+    "automatic_test": false,
+    "results_root": "runs",
+    "checkpoints_root": "checkpoints/local",
+    "metrics_file": "metrics.csv",
+    "figure_file": "prediction.png",
+    "save_best_only": true
+  },
+  "eva": {
+    "rho": 1.0,
+    "tau": 0.99,
+    "whiten": false,
+    "calibration_images": 64,
+    "batch_size": 1,
+    "max_patch_tokens_per_batch": 256,
+    "max_forwards": 128,
+    "max_seconds": 900,
+    "seed": 42
+  }
+}

@@ -1,4 +1,4 @@
-"""Predict coral health and save class IDs, colors, and an overlay."""
+"""Apply a saved model and save one input/prediction/overlay figure."""
 
 import argparse
 from pathlib import Path
@@ -6,17 +6,21 @@ from pathlib import Path
 import numpy as np
 import torch
 from PIL import Image
+from PIL import ImageDraw
 from torch.nn import functional as F
 
-from train import OUTPUT, image_tensor, load_checkpoint
+from train import OUTPUT, ROOT, image_tensor, load_checkpoint
+from local_output import PALETTE, quiet_downloads
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("image", type=Path)
     parser.add_argument("--checkpoint", type=Path, default=OUTPUT)
+    parser.add_argument("--output", type=Path, help="One PNG figure; defaults to runs/predictions/IMAGE.png")
     args = parser.parse_args()
-    model, height = load_checkpoint(args.checkpoint)
+    with quiet_downloads():
+        model, height = load_checkpoint(args.checkpoint)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device).eval()
     image = Image.open(args.image).convert("RGB")
@@ -29,27 +33,25 @@ def main():
         ids = logits.argmax(1)[0].cpu().numpy().astype(np.uint8)
 
     # Background, Healthy, Bleached, Dead.
-    palette = np.array([[0, 0, 0], [40, 190, 80], [255, 240, 130], [220, 65, 60]], dtype=np.uint8)
-    colors = Image.fromarray(palette[ids])
+    colors = Image.fromarray(PALETTE[ids])
     blended = np.array(Image.blend(image, colors, 0.45))
     blended[ids == 0] = np.asarray(image)[ids == 0]  # Leave background unchanged.
-    directory = Path("predictions")
-    directory.mkdir(exist_ok=True)
-    prefix = directory / args.image.stem
-    Image.fromarray(ids).save(f"{prefix}_ids.png")
-    colors.save(f"{prefix}_colors.png")
-    Image.fromarray(blended).save(f"{prefix}_overlay.png")
-    if stats:
-        from matplotlib import colormaps
-        maps = {}
-        for key in ("entropy", "mutual_information"):
-            values = F.interpolate(stats[key][:, None], size=(image.height, image.width),
-                                   mode="bilinear", align_corners=False)[0, 0].cpu().numpy()
-            maps[key] = values.astype(np.float16)
-            colors = colormaps["magma"](np.clip(values / np.log(4), 0, 1))[:, :, :3]
-            Image.fromarray((255 * colors).astype(np.uint8)).save(f"{prefix}_{key}.png")
-        np.savez_compressed(f"{prefix}_uncertainty.npz", **maps)
-    print(f"Saved predictions to {directory}; IDs: 0=Background, 1=Healthy, 2=Bleached, 3=Dead")
+    width = min(640, image.width)
+    height = max(1, round(image.height * width / image.width))
+    figure = Image.new("RGB", (3 * width, height + 65), "white")
+    draw = ImageDraw.Draw(figure)
+    draw.text((8, 6), "Healthy: green | Bleached: yellow | Dead: red", fill="black")
+    for column, (panel, title) in enumerate(((image, "Input"), (colors, "Prediction"),
+                                            (Image.fromarray(blended), "Overlay"))):
+        draw.text((column * width + 8, 30), title, fill="black")
+        figure.paste(panel.resize((width, height), Image.Resampling.NEAREST if column == 1
+                                 else Image.Resampling.LANCZOS), (column * width, 65))
+    output = args.output or ROOT / "runs" / "predictions" / f"{args.image.stem}.png"
+    if output.suffix.lower() != ".png":
+        parser.error("--output must be a PNG file.")
+    output.parent.mkdir(parents=True, exist_ok=True)
+    figure.save(output)
+    print(f"Prediction figure: {output}")
 
 
 if __name__ == "__main__":

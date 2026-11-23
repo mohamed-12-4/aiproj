@@ -19,12 +19,14 @@ else:
 def count_remote(run_name: str):
     import torch
     from diagnose import coverage
+    from coral_data import data_directory, dataset_config
     checkpoint = Path("/workspace/checkpoints") / run_name
     state = torch.load(checkpoint / "head.pt", map_location="cpu", weights_only=True)
     height, epoch = state["height"], state["epoch"]
+    annotation = state.get("dataset_config") or dataset_config("V1")
     del state
     print(f"Using saved epoch {epoch}. Counting masks on CPU; no GPU allocated.", flush=True)
-    coverage("/workspace/data/coralscapes", height, checkpoint / "diagnostics/validation")
+    coverage(data_directory("/workspace", annotation), height, checkpoint / "diagnostics/validation", annotation=annotation)
     volume.commit()
 
 
@@ -32,9 +34,11 @@ def count_remote(run_name: str):
               timeout=3600, volumes={"/workspace": volume})
 def predict_remote(run_name: str):
     from diagnose import diagnose
+    from coral_data import checkpoint_dataset, data_directory
     volume.reload()
     checkpoint = Path("/workspace/checkpoints") / run_name
-    result = diagnose(checkpoint, "/workspace/data/coralscapes", checkpoint / "diagnostics/validation")
+    annotation = checkpoint_dataset(checkpoint)
+    result = diagnose(checkpoint, data_directory("/workspace", annotation), checkpoint / "diagnostics/validation")
     volume.commit()
     return {"epoch": result["checkpoint_epoch"], "dead": result["dead"]}
 

@@ -1,0 +1,12 @@
+[submodule "third_party/coralscapes_v2_author"]
+	path = third_party/coralscapes_v2_author
+	url = https://github.com/josauder/dinov3_lora_dpt_coralscapes.git
+[submodule "third_party/rein_author"]
+	path = third_party/rein_author
+	url = https://github.com/w1oves/Rein.git
+[submodule "third_party/rein_plus_author"]
+	path = third_party/rein_plus_author
+	url = https://github.com/w1oves/Rein.git
+[submodule "third_party/soma_author"]
+	path = third_party/soma_author
+	url = https://github.com/ysj9909/SoMA.git

@@ -9,6 +9,7 @@ from pathlib import Path
 
 from train import (CLASSES, IGNORE, LABEL_MAP, OUTPUT, ROOT,
                    image_tensor, load_checkpoint, remap_mask, scores)
+from coral_data import checkpoint_dataset, data_directory
 
 os.environ.setdefault("MPLCONFIGDIR", str(ROOT / ".cache/matplotlib"))
 import matplotlib
@@ -101,7 +102,9 @@ def main():
         parser.error("--samples and --seed must be nonnegative.")
     if not (args.checkpoint / "head.pt").is_file():
         parser.error(f"No head.pt in {args.checkpoint}; finish training first.")
-    shards = sorted((ROOT / "data/coralscapes/data").glob(f"{args.split}-*.parquet"))
+    annotation = checkpoint_dataset(args.checkpoint)
+    label_map = np.asarray(annotation["label_map"], dtype=np.uint8)
+    shards = sorted((data_directory(ROOT, annotation) / "data").glob(f"{args.split}-*.parquet"))
     total = sum(pq.read_metadata(path).num_rows for path in shards)
     if not total:
         parser.error("Local dataset missing. Run python train.py --download-only first.")
@@ -119,7 +122,7 @@ def main():
 
     for index, (image, mask, source) in enumerate(tqdm(samples_from(shards), total=total, desc=args.split)):
         size = mask.size if args.resolution == "original" else (height * 2, height)
-        target = remap_mask(mask, size).numpy()
+        target = remap_mask(mask, size, label_map).numpy()
         pixels = image_tensor(image, (height * 2, height)).unsqueeze(0).to(device)
         with torch.autocast(device.type, enabled=device.type == "cuda"):
             logits = model(pixels)
@@ -143,8 +146,9 @@ def main():
         "split": args.split, "num_images": total, "classes": CLASSES,
         "input_size_hw": [height, height * 2], "mask_resolution": args.resolution,
         "valid_pixels": int(confusion.sum()), "ignored_pixels": ignored_pixels,
-        "ignored_source_ids": np.flatnonzero(LABEL_MAP[:40] == IGNORE).tolist(),
-        "source_id_to_class_id": LABEL_MAP[:40].tolist(),
+        "annotation_version": annotation["annotation_version"], "dataset": annotation,
+        "ignored_source_ids": np.flatnonzero(label_map[:annotation["num_source_classes"] + 1] == IGNORE).tolist(),
+        "source_id_to_class_id": label_map[:annotation["num_source_classes"] + 1].tolist(),
         "seed": args.seed, "samples": examples,
         "metrics": metrics, "confusion_matrix": confusion.tolist(),
         "confusion_matrix_axes": "rows=ground truth, columns=prediction",
